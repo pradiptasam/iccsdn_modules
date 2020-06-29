@@ -1,6 +1,7 @@
 import pyscf
 from pyscf import gto, scf
 import MP2
+import CC
 
 ##---------------------------------------------------------##
              #Specify geometry and basis set#       
@@ -22,8 +23,14 @@ symmetry = 'C2v',
 
 mf = scf.RHF(mol).run()
 
-mp2_res = MP2.MP2(mf)
-mp2_res.nfo = 1
-mp2_res.run()
+#mp2_res = MP2.MP2(mf)
+#mp2_res.nfo = 1
+#mp2_res.run()
 
-cc_res = cc.ccsd(mf)
+cc_res = CC.CC(mf)
+cc_res.variant = 'CCD'
+if (cc_res.variant == 'ICCSD'):
+    cc_res.no_act = 1
+    cc_res.nv_act = 1
+cc_res.max_diis = 7
+cc_res.run()

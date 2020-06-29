@@ -1,6 +1,6 @@
 import numpy as np
 
-from pyscf import scf, mp
+from pyscf import mp
 from pyscf.lib import logger
 
 from PostHF import GetIntNData
@@ -42,6 +42,8 @@ class MP2(object):
 	#log = logger.Logger(self.stdout, self.verbose)
 	#log.warn('**** RUNING MP2 ****')
 
+        print '**** RUNING MP2 ****'
+
 	AllData = GetIntNData(self.mf, self.nfo, self.nfv)
 
 	AllData.transform_all_ints()
@@ -57,5 +59,8 @@ class MP2(object):
 
 	self.calc_mp2_energy()
 
-        print '**** RUNING MP2 ****'
+	self.twoelecint_mo = None
+	self.t2 = None
+
+        print '**** MP2 is done ****'
 

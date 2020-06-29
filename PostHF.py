@@ -51,6 +51,8 @@ class GetIntNData(object):
 	    quit()
 	
 	self.nvirt = self.nao - self.nocc
+	self.no_act = 0
+	self.nv_act = 0
 
     def init_integrals(self):
         # Compute one-electron kinetic integrals
@@ -98,7 +100,7 @@ class GetIntNData(object):
     
         for i in range(0,self.nocc):
             for j in range(0,self.nocc):
-                e_scf_mo_2 += 2*self.twoelecint_mo[i][i][j][j] - self.twoelecint_mo[i][j][i][j]
+                e_scf_mo_2 += 2*self.twoelecint_mo[i][j][i][j] - self.twoelecint_mo[i][i][j][j]
      
         e_scf_mo = 2*e_scf_mo_1 + e_scf_mo_2 + self.enuc
 
@@ -172,6 +174,24 @@ class GetIntNData(object):
                     for b in range(self.nocc,self.nao):
                         self.D2[i,j,a-self.nocc,b-self.nocc] = self.mo_energy[i] + self.mo_energy[j] - self.mo_energy[a] - self.mo_energy[b]
 
+    def get_denom_Sv(self):
+
+	self.Dv = np.zeros((self.nocc,self.nv_act,self.nvirt,self.nvirt))
+        for i in range(0,self.nocc):
+            for c in range(0,self.nv_act):
+                for a in range(0,self.nvirt):
+                    for b in range(0,self.nvirt):
+                        self.Dv[i,c,a,b] = self.mo_energy[i] + self.mo_energy[c+self.nocc] - self.mo_energy[a+self.nocc] - self.mo_energy[b+self.nocc]
+
+    def get_denom_So(self):
+
+	self.Do = np.zeros((self.nocc,self.nocc,self.nvirt,self.no_act))
+        for i in range(0,self.nocc):
+            for j in range(0,self.nocc):
+                for a in range(0,self.nvirt):
+                    for k in range(self.nocc-self.no_act,self.nocc):
+                        self.Dv[i,j,a,k-self.nocc+self.no_act] = self.mo_energy[i] + self.mo_energy[j] - self.mo_energy[a+self.nocc] - self.mo_energy[k]
+
     def init_guess_t1(self):
 	self.get_denom_t1()
 
@@ -189,10 +209,181 @@ class GetIntNData(object):
                     for b in range(self.nocc,self.nao):
                         self.t2[i,j,a-self.nocc,b-self.nocc] = self.twoelecint_mo[i,j,a,b]/self.D2[i,j,a-self.nocc,b-self.nocc]
 
+    def get_tau(self, rank_t1):
 
-    def run(self):
+	self.tau = cp.deepcopy(self.t2)
+	if (rank_t1 > 1):
+	    self.tau += np.einsum('ia,jb->ijab', self.t1, self.t1)
 
-	log = logger.Logger(self.stdout, self.verbose)
+    def init_guess_Sv(self):
+	self.get_denom_Sv()
 
-	#log.warn('**** RUNING MP2 ****')
+	self.Sv = np.zeros((self.nocc,self.nv_act,self.nvirt,self.nvirt))
+        for i in range(0,self.nocc):
+            for c in range(0,self.nv_act):
+                for a in range(0,self.nvirt):
+                    for b in range(0,self.nvirt):
+          		self.Sv[i,c,a,b] = self.twoelecint_mo[i,c+self.nocc,a+self.nocc,b+self.nocc]/Dv[i,c,a,b]
+
+    def init_guess_So(self):
+	self.get_denom_So()
+
+	self.So = np.zeros((self.nocc,self.nocc,self.nvirt,self.no_act))
+        for i in range(0,self.nocc):
+            for j in range(0,self.nocc):
+                for a in range(0,self.nvirt):
+                    for k in range(self.nocc-self.no_act,self.nocc):
+          		self.So[i,j,a,k-self.nocc+self.no_act] = self.twoelecint_mo[i,j,a+self.nocc,k]/Dv[i,j,a,k-self.nocc+self.no_act]
+
+
+    ### Setup DIIS
+    def diis_ini(self, A):
+        diis_vals_A = [A.copy()]
+        diis_errors = []
+
+        return diis_vals_A, diis_errors
+
+    def init_diis_t1(self):
+	self.diis_vals_t1, self.diis_errors_t1 = self.diis_ini(self.t1)
+
+    def init_diis_t2(self):
+	self.diis_vals_t2, self.diis_errors_t2 = self.diis_ini(self.t2)
+
+    def init_diis_So(self):
+	self.diis_vals_So, self.diis_errors_So = self.diis_ini(self.So)
+
+    def init_diis_Sv(self):
+	self.diis_vals_Sv, self.diis_errors_Sv = self.diis_ini(self.Sv)
+
+    # Build error matrix B, [Pulay:1980:393], Eqn. 6, LHS
+    def diis_error_matrix(self, diis_size):
+
+        B = np.ones((diis_size + 1, diis_size + 1)) * -1
+        B[-1, -1] = 0
+        for n1, e1 in enumerate(self.diis_errors):
+            for n2, e2 in enumerate(self.diis_errors):
+                # Vectordot the error vectors
+                B[n1, n2] = np.dot(e1, e2)
+        B[:-1, :-1] /= np.abs(B[:-1, :-1]).max()
+        # Build residual vector, [Pulay:1980:393], Eqn. 6, RHS
+        resid = np.zeros(diis_size + 1)
+        resid[-1] = -1
+        print resid
+        # Solve Pulay equations, [Pulay:1980:393], Eqn. 6
+        self.ci = np.linalg.solve(B, resid)
+
+    def new_amp(self, A, diis_size, ci, diis_vals_A): 
+        A[:] = 0
+        for num in range(diis_size):
+          A += ci[num] * diis_vals_A[num + 1]
+        return A
+
+    def update_diis_t1(self, diis_size):
+	self.t1 = self.new_amp(self.t1, diis_size, self.ci, self.diis_vals_t1)
+
+    def update_diis_t2(self, diis_size):
+	self.t2 = self.new_amp(self.t2, diis_size, self.ci, self.diis_vals_t2)
+
+    def update_diis_So(self, diis_size):
+	self.So = self.new_amp(self.So, diis_size, self.ci, self.diis_vals_So)
+
+    def update_diis_Sv(self, diis_size):
+	self.Sv = self.new_amp(self.Sv, diis_size, self.ci, self.diis_vals_Sv)
+
+    def errors_diis_t1(self):
+        self.diis_vals_t1.append(self.t1.copy())
+        error_t1 = (data.t1 - self.old_t1).ravel()
+
+	return error_t1
+
+    def errors_diis_t2(self):
+        self.diis_vals_t2.append(self.t2.copy())
+        error_t2 = (self.t2 - self.old_t2).ravel()
+
+	return error_t2
+
+    def errors_diis_So(self):
+        self.diis_vals_So.append(self.So.copy())
+        error_So = (self.So - self.old_So).ravel()
+
+	return error_So
+
+    def errors_diis_Sv(self):
+        self.diis_vals_Sv.append(self.Sv.copy())
+        error_Sv = (self.Sv - self.old_Sv).ravel()
+
+	return error_Sv
+
+    ### All DIIS related functions are done
+
+    def symmetrize(self,R_ijab):
+        R_ijab_new = np.zeros((self.nocc,self.nocc,self.nvirt,self.nvirt))
+        for i in range(0,self.nocc):
+            for j in range(0,self.nocc):
+                for a in range(0,self.nvirt):
+                    for b in range(0,self.nvirt):
+                        R_ijab_new[i,j,a,b] = R_ijab[i,j,a,b] + R_ijab[j,i,b,a]
+    
+        R_ijab = cp.deepcopy(R_ijab_new)
+ 
+        return R_ijab
+        R_ijab = None
+        R_ijab_new = None
+
+    def update_t1_t2(self, R_ia, R_ijab):
+        ntmax = 0
+        eps = 100
+
+	self.old_t2 = self.t2.copy()
+	self.old_t1 = self.t1.copy()
+
+        delt2 = np.divide(R_ijab,self.D2)
+        delt1 = np.divide(R_ia,self.D1)
+        self.t1 = self.t1 + delt1
+        self.t2 = self.t2 + delt2
+        ntmax = np.size(self.t1)+np.size(self.t2)
+        eps = float(np.sum(abs(R_ia)+np.sum(abs(R_ijab)))/ntmax)
+	delt1 = None
+	delt2 = None
+        return eps
+
+    def update_t2(self, R_ijab):
+        ntmax = 0
+        eps = 100
+
+	self.old_t2 = self.t2.copy()
+
+        delt2 = np.divide(R_ijab,self.D2)
+        self.t2 = self.t2 + delt2
+        ntmax = np.size(self.t2)
+        eps = float(np.sum(abs(R_ijab))/ntmax)
+	delt2 = None
+	#print R_ijab
+        return eps
+
+    def update_So(R_ijav,So):
+        ntmax = 0
+        eps = 100
+
+	self.old_So = self.So.copy()
+
+        delSo = np.divide(R_ijav,self.Do)
+        self.So = self.So + delSo
+        ntmax = np.size(self.So)
+        eps = float(np.sum(abs(R_ijav))/ntmax)
+	delSo = None
+        return eps
+
+    def update_Sv(R_iuab,Sv):
+        ntmax = 0
+        eps = 100
+
+	self.old_Sv = self.Sv.copy()
+
+        delSv = np.divide(R_iuab,self.Dv)
+        self.Sv = self.Sv + delSv
+        ntmax = np.size(self.Sv)
+        eps = float(np.sum(abs(R_iuab))/ntmax)
+	delSv = None
+        return eps
 
