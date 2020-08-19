@@ -7,7 +7,7 @@ from PostHF import GetIntNData
 import utils
 
 
-class CC(object):
+class state(object):
     def __init__(self, mf, variant = 'CCSD', nfo=0, nfv=0):
 
         self.mol  = mf.mol
@@ -72,6 +72,7 @@ class CC(object):
 
 	data.get_tau(self.rank_t1)
 
+
     def init_diis(self, data):
 
 	if (self.rank_t1 > 0):
@@ -132,7 +133,7 @@ class CC(object):
     def convergence(self, e_cc, e_old, eps, x):
         del_e = e_cc - e_old
         if abs(eps) <= self.conv and abs(del_e) <= self.conv:
-            print "ccd converged!!!"
+            print "ccsd converged!!!"
             print "Total energy is : "+str(self.e_hf + e_cc)
             return True
         else:
@@ -142,19 +143,75 @@ class CC(object):
             print "energy : "+str(self.e_hf + e_cc)
             return False
 
+    def convergence_ext(self, e_cc, e_old, eps, eps_So, eps_Sv, x):
+        del_e = e_cc - e_old
+        if abs(eps) <= self.conv and abs(eps_So) <= self.conv and abs(eps_Sv) <= self.conv and abs(del_e) <= self.conv:
+            print "change in t1+t2 , So, Sv : "+str(eps)+" "+str(eps_So)+" "+str(eps_Sv)
+            print "energy difference : "+str(del_e)
+            print "ccsd converged!!!"
+            print "Total energy is : "+str(self.e_hf + e_cc)
+            return True
+        else:
+    	    print "cycle number : "+str(x+1)
+            print "change in t1+t2 , So, Sv : "+str(eps)+" "+str(eps_So)+" "+str(eps_Sv)
+            print "energy difference : "+str(del_e)
+            print "energy : "+str(self.e_hf + e_cc)
+            return False
+
     def calc_residue(self, data):
 
 	intermediates = utils.intermediates(data)
 	amplitude = utils.amplitude(data)
 
+	# First get all the intermediates
         I_vv, I_oo, Ivvvv, Ioooo, Iovvo, Iovvo_2, Iovov,Iovov_2 = intermediates.initialize()
 	if (self.rank_t2 > 1):
             I_oo,I_vv,Ioooo,Iovvo,Iovvo_2,Iovov = intermediates.update_int(I_vv,I_oo,Ioooo,Iovvo,Iovvo_2,Iovov)
 
-	#if (self.rank_t1 > 0):
-	#    I1, I2 = intermediates.R_ia_intermediates()
+	if (self.rank_t1 > 0):
+	    I1, I2 = intermediates.R_ia_intermediates()
+
+	if (self.rank_So > 0):
+	    II_oo = intermediates.W1_int_So()
+	    II_vv = intermediates.W1_int_Sv()
+	    II_ov = intermediates.coupling_terms_So()
+	    II_vo = intermediates.coupling_terms_Sv()
+
+	    II_ovoo,II_ovoo3,II_vvvo3 = intermediates.W2_int_So()
+            II_vvvo,II_vvvo2,II_ovoo2 = intermediates.W2_int_Sv()
+
+	if (self.rank_t1 > 0):
+	    self.R_ia = amplitude.singles(I1,I2,I_oo,I_vv)
+            I_oo,I_vv,I_oovo,I_vovv,Ioooo_2,I_voov,Iovov_3,Iovvo_3,Iooov,I3=intermediates.singles_intermediates(I_oo,I_vv,I2, self.rank_t1)
 
         self.R_ijab = amplitude.doubles(I_oo,I_vv,Ivvvv,Ioooo,Iovvo,Iovvo_2,Iovov,Iovov_2)
+
+        if (self.rank_t1 > 0):
+            self.R_ijab += amplitude.singles_n_doubles(I_oovo,I_vovv, self.rank_t1)
+            self.R_ijab += amplitude.higher_order(Iovov_3, Iovvo_3, Iooov, I3, Ioooo_2, I_voov, self.rank_t1)
+
+	if (self.rank_So > 0):
+            self.R_ijab += amplitude.inserted_diag_So(II_oo) 
+
+            self.R_ijav = amplitude.So_diagram_vs_contraction()
+            self.R_ijav += amplitude.So_diagram_vt_contraction()
+            self.R_ijav += amplitude.v_sv_t_contraction_diag(II_vo)
+            self.R_ijav += amplitude.w2_diag_So(II_ovoo,II_vvvo2,II_ovoo2)
+            if (self.rank_t1 > 0):
+                self.R_ijav += amplitude.T1_contribution_So()
+	        self.R_ia += amplitude.inserted_diag_So_t1(II_oo)
+
+	if (self.rank_Sv > 0):
+            self.R_ijab += amplitude.inserted_diag_Sv(II_vv) 
+
+            self.R_iuab = amplitude.Sv_diagram_vs_contraction()
+            self.R_iuab += amplitude.Sv_diagram_vt_contraction()
+            self.R_iuab += amplitude.v_so_t_contraction_diag(II_ov)
+            self.R_iuab += amplitude.w2_diag_Sv(II_vvvo,II_ovoo3,II_vvvo3)
+            if (self.rank_t1 > 0):
+                self.R_iuab += amplitude.T1_contribution_Sv()
+	        self.R_ia += amplitude.inserted_diag_Sv_t1(II_vv)
+    
 
         self.R_ijab = data.symmetrize(self.R_ijab)
 
@@ -170,7 +227,7 @@ class CC(object):
 	    self.eps_So = data.update_So(self.R_ijav)
 
 	if (self.rank_Sv > 0):
-	    self.eps_Sv = data.init_guess_Sv(self.R_iuab)
+	    self.eps_Sv = data.update_Sv(self.R_iuab)
 
 	
     def converge_cc_eqn(self, data):
@@ -185,7 +242,12 @@ class CC(object):
 		self.update_diis(data, x)
 
 	    e_cc = self.energy_cc(data)
-            val = self.convergence(e_cc,self.e_old,self.eps, x)
+
+            if (self.rank_So > 0):
+                val = self.convergence_ext(e_cc,self.e_old,self.eps, self.eps_So, self.eps_Sv, x)
+	    else: 
+                val = self.convergence(e_cc,self.e_old,self.eps, x)
+
             if val == True :
                 break
             else:  

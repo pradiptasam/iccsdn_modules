@@ -181,7 +181,7 @@ class GetIntNData(object):
             for c in range(0,self.nv_act):
                 for a in range(0,self.nvirt):
                     for b in range(0,self.nvirt):
-                        self.Dv[i,c,a,b] = self.mo_energy[i] + self.mo_energy[c+self.nocc] - self.mo_energy[a+self.nocc] - self.mo_energy[b+self.nocc]
+                        self.Dv[i,c,a,b] = self.mo_energy[i] - self.mo_energy[c+self.nocc] - self.mo_energy[a+self.nocc] - self.mo_energy[b+self.nocc]
 
     def get_denom_So(self):
 
@@ -190,7 +190,7 @@ class GetIntNData(object):
             for j in range(0,self.nocc):
                 for a in range(0,self.nvirt):
                     for k in range(self.nocc-self.no_act,self.nocc):
-                        self.Dv[i,j,a,k-self.nocc+self.no_act] = self.mo_energy[i] + self.mo_energy[j] - self.mo_energy[a+self.nocc] - self.mo_energy[k]
+                        self.Do[i,j,a,k-self.nocc+self.no_act] = self.mo_energy[i] + self.mo_energy[j] - self.mo_energy[a+self.nocc] + self.mo_energy[k]
 
     def init_guess_t1(self):
 	self.get_denom_t1()
@@ -223,7 +223,7 @@ class GetIntNData(object):
             for c in range(0,self.nv_act):
                 for a in range(0,self.nvirt):
                     for b in range(0,self.nvirt):
-          		self.Sv[i,c,a,b] = self.twoelecint_mo[i,c+self.nocc,a+self.nocc,b+self.nocc]/Dv[i,c,a,b]
+          		self.Sv[i,c,a,b] = self.twoelecint_mo[i,c+self.nocc,a+self.nocc,b+self.nocc]/self.Dv[i,c,a,b]
 
     def init_guess_So(self):
 	self.get_denom_So()
@@ -233,7 +233,7 @@ class GetIntNData(object):
             for j in range(0,self.nocc):
                 for a in range(0,self.nvirt):
                     for k in range(self.nocc-self.no_act,self.nocc):
-          		self.So[i,j,a,k-self.nocc+self.no_act] = self.twoelecint_mo[i,j,a+self.nocc,k]/Dv[i,j,a,k-self.nocc+self.no_act]
+          		self.So[i,j,a,k-self.nocc+self.no_act] = self.twoelecint_mo[i,j,a+self.nocc,k]/self.Do[i,j,a,k-self.nocc+self.no_act]
 
 
     ### Setup DIIS
@@ -292,7 +292,7 @@ class GetIntNData(object):
 
     def errors_diis_t1(self):
         self.diis_vals_t1.append(self.t1.copy())
-        error_t1 = (data.t1 - self.old_t1).ravel()
+        error_t1 = (self.t1 - self.old_t1).ravel()
 
 	return error_t1
 
@@ -361,7 +361,7 @@ class GetIntNData(object):
 	#print R_ijab
         return eps
 
-    def update_So(R_ijav,So):
+    def update_So(self, R_ijav):
         ntmax = 0
         eps = 100
 
@@ -374,7 +374,7 @@ class GetIntNData(object):
 	delSo = None
         return eps
 
-    def update_Sv(R_iuab,Sv):
+    def update_Sv(self, R_iuab):
         ntmax = 0
         eps = 100
 

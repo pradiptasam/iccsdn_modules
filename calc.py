@@ -27,10 +27,11 @@ mf = scf.RHF(mol).run()
 #mp2_res.nfo = 1
 #mp2_res.run()
 
-cc_res = CC.CC(mf)
-cc_res.variant = 'CCD'
+cc_res = CC.state(mf)
+cc_res.variant = 'ICCSD'
 if (cc_res.variant == 'ICCSD'):
     cc_res.no_act = 1
     cc_res.nv_act = 1
 cc_res.max_diis = 7
+cc_res.maxiter = 50
 cc_res.run()
