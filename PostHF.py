@@ -4,6 +4,7 @@ from pyscf import scf
 from pyscf import symm
 from pyscf.lib import logger
 import copy as cp
+import math
 
 
 class GetIntNData(object):
@@ -36,6 +37,7 @@ class GetIntNData(object):
 	self.e_hf = mf.e_tot
 
 	self.orb_sym = []
+	self.orb_sym_spc = []
 
         # Obtain the number of atomic orbitals in the basis set
         self.nao = self.mol.nao_nr()
@@ -53,6 +55,9 @@ class GetIntNData(object):
 	self.nvirt = self.nao - self.nocc
 	self.no_act = 0
 	self.nv_act = 0
+
+	# Group multiplication table for D2h written in a way that the table of C2, C2v is just a submatrix to this
+	self.multd2h =  [[1,2,3,4,5,6,7,8],[2,1,4,3,6,5,8,7],[3,4,1,2,7,8,5,6],[4,3,2,1,8,7,6,5],[5,6,7,8,1,2,3,4],[6,5,8,7,2,1,4,3],[7,8,5,6,3,4,1,2],[8,7,6,5,4,3,2,1]]
 
     def init_integrals(self):
         # Compute one-electron kinetic integrals
@@ -145,6 +150,8 @@ class GetIntNData(object):
             print "MO conversion successful"
     	else: 
     	    print "MO conversion not successful"
+	    print 'e_scf_mo: ', e_scf_mo 
+	    print 'self.e_hf: ', self.e_hf 
     
 	self.GetFock()
 
@@ -158,6 +165,43 @@ class GetIntNData(object):
         if self.nfo > 0:
             self.orb_sym = self.orb_sym[self.nfo:]
 
+	self.transform_orb_sym()
+
+    def transform_orb_sym(self):
+
+        sym_converter = {}
+      
+	sym = self.mol.symmetry
+        if (sym=='D2h'):
+            sym_converter[0] = 0
+            sym_converter[1] = 3
+            sym_converter[2] = 5
+            sym_converter[3] = 6
+            sym_converter[4] = 7
+            sym_converter[5] = 4
+            sym_converter[6] = 2
+            sym_converter[7] = 1
+      
+        if ((sym=='C2v') or (sym=='C2h') or (sym=='Coov')):
+            sym_converter[0] = 0
+            sym_converter[1] = 3
+            sym_converter[2] = 1
+            sym_converter[3] = 2
+      
+        if (sym=='C1'):
+            sym_converter[0] = 0
+      
+        if (sym=='C2'):
+            sym_converter[0] = 0
+            sym_converter[1] = 1
+      
+        if (sym=='Cs'):
+            sym_converter[0] = 0
+            sym_converter[1] = 1
+      
+        for i in self.orb_sym:
+            self.orb_sym_spc.append(sym_converter[i])
+          
     def get_denom_t1(self):
 
         self.D1 = np.zeros((self.nocc,self.nvirt))
@@ -386,4 +430,142 @@ class GetIntNData(object):
         eps = float(np.sum(abs(R_iuab))/ntmax)
 	delSv = None
         return eps
+
+### All the functions here after are used mostly in the CC.state.exc_en class
+
+    def init_guess_r_t1_t2(self, ind, nroot):
+
+	self.dict_r_t1 = {}
+	self.dict_r_t2 = {}
+
+	for iroot in range(0,nroot):
+	  t1_guess = np.zeros((self.nocc,self.nvirt))
+	  t2_guess = np.zeros((self.nocc,self.nocc,self.nvirt,self.nvirt))
+          if(iroot==0):
+              t1_tmp = self.koopmann_spectrum_sym_sing(ind)
+              t2_tmp = self.koopmann_spectrum_sym_doub(ind)
+
+          io,iv,iEx = self.find_orb_indcs_all(t1_tmp, t2_tmp)
+ 
+          if (iEx == 1):
+            t1_guess[io,iv] = 1.0/math.sqrt(2.0)  
+            t1_tmp[io,iv]=123.456
+ 
+          elif (iEx == 2):
+            t2_guess[io[0],io[1],iv[0],iv[1]] = 1.0/2.0 
+            t2_tmp[io[0],io[1],iv[0],iv[1]]=123.456
+ 
+          else: 
+            print 'Wrong Guess'
+            exit()     
+ 
+          self.dict_r_t1[0,iroot] = t1_guess
+          self.dict_r_t2[0,iroot] = t2_guess
+
+
+    def init_guess_r_So(self, nroot):
+
+	self.dict_r_So = {}
+
+	for iroot in range(0,nroot):
+            self.dict_r_So[0,iroot] = np.zeros((self.nocc,self.nocc,self.nvirt,self.no_act))
+
+    def init_guess_r_Sv(self, nroot):
+
+	self.dict_r_Sv = {}
+
+	for iroot in range(0,nroot):
+            self.dict_r_Sv[0,iroot] =  np.zeros((self.nocc,self.nv_act,self.nvirt,self.nvirt))
+
+
+    def init_Y_mat(self, rank_So, rank_Sv):
+
+        self.dict_Y_ia = {}
+        self.dict_Y_ijab = {}
+   
+	if (rank_So > 0):
+            self.dict_Y_ijav = {}
+	if (rank_Sv > 0):
+            self.dict_Y_iuab = {}
+  
+    def init_B_mat(self, rank_So, rank_Sv, nroot):
+
+        self.B_Y_ia = np.zeros((nroot,nroot))
+        self.B_Y_ijab = np.zeros((nroot,nroot))
+   
+	if (rank_So > 0):
+            self.B_Y_ijav = np.zeros((nroot,nroot))
+	if (rank_Sv > 0):
+            self.B_Y_iuab = np.zeros((nroot,nroot))
+  
+    def koopmann_spectrum_sym_sing(self, isym):
+      
+        t1_tmp = np.zeros((self.nocc,self.nvirt))
+     
+        for i in range(0,self.nocc):
+            sym_i = self.orb_sym_spc[i]
+            for a in range(0,self.nvirt):             # Store the excitation energy obtained using the Fock matrix
+                sym_a = self.orb_sym_spc[a+self.nocc]
+                prod_sym = self.multd2h[sym_i][sym_a] - 1
+           
+              
+                if (prod_sym == isym):
+                    t1_tmp[i,a] = abs(self.fock_mo[i,i]-self.fock_mo[a+self.nocc,a+self.nocc])   # Store only the symmetry allowed excitations
+                else: 
+                    t1_tmp[i,a] = 123.456 # initialize with some large number
+     
+        return t1_tmp
+
+    def koopmann_spectrum_sym_doub(self, isym):
+      
+        t2_tmp = np.zeros((self.nocc,self.nocc,self.nvirt,self.nvirt))
+     
+        for i in range(0,self.nocc):
+            sym_i = self.orb_sym[i]
+            for j in range(0,self.nocc):
+                sym_j = self.orb_sym_spc[j]              # Store the excitation energy obtained using the Fock matrix
+                sym_ij = self.multd2h[sym_i][sym_j] - 1
+                for a in range(0,self.nvirt):
+                    sym_a = self.orb_sym[a+self.nocc]
+                    sym_ija = self.multd2h[sym_ij][sym_a] - 1
+                    for b in range(0,self.nvirt):
+                        sym_b = self.orb_sym_spc[b+self.nocc]
+                        prod_sym = self.multd2h[sym_ija][sym_b] - 1
+                       
+                        if (prod_sym == isym):
+                            t2_tmp[i,j,a,b] = abs(self.fock_mo[i,i] + self.fock_mo[j,j]-self.fock_mo[a+self.nocc,a+self.nocc]-self.fock_mo[b+self.nocc,b+self.nocc])
+                        else: 
+                            t2_tmp[i,j,a,b] = 123.456        # initialize with some large number
+    
+        return t2_tmp
+
+    def find_orb_indcs_all(self, T1mat, T2mat):
+    
+        iEx = 0
+     
+        min_val_1 = np.amin(T1mat)
+        result = np.where(T1mat == np.amin(T1mat))
+     
+        min_val_2 = np.amin(T2mat)
+     
+        if (min_val_1 <= min_val_2):
+            if (len(result[0])>1):
+                print 'WARNING: There is degeneracy in the system'
+            ind_occ = result[0][0]
+            ind_virt = result[1][0]
+            iEx = 1
+     
+        else:
+            print 'Double excitation dominated guess'
+            result = np.where(T2mat == np.amin(T2mat))
+           
+            if (len(result[0])>1):
+                print 'WARNING: There is degeneracy in the system'
+           
+            ind_occ = [result[0][0], result[1][0]]
+            ind_virt = [result[2][0], result[3][0]]
+            iEx = 2
+        
+        return ind_occ,ind_virt, iEx
+
 

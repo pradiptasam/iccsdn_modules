@@ -60,6 +60,7 @@ class intermediates(object):
      
         I_vv = None
         I_oo = None
+	Ioooo = None
         Iovvo = None
         Iovvo_2 = None
         Iovov = None
@@ -532,3 +533,323 @@ class amplitude(object):
         II_vvvo3 = None
         gc.collect()
     
+class intermediates_response(object):
+    def __init__(self, data, r, iroot):
+
+	self.nao = data.nao
+	self.nocc = data.nocc
+	self.nvirt = data.nvirt
+	self.no_act = data.no_act
+
+	self.data = data
+	self.nv_act = data.nv_act
+	self.n_act = self.no_act + self.nv_act
+
+	self.data = data
+
+	self.r = r
+	self.iroot = iroot
+
+    def initialize(self):
+	occ = self.nocc
+	nao = self.nao
+        I_vv = cp.deepcopy(self.data.fock_mo[occ:nao,occ:nao])
+        I_oo = cp.deepcopy(self.data.fock_mo[:occ,:occ])
+        Ivvvv = cp.deepcopy(self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,occ:nao])
+        Ioooo = cp.deepcopy(self.data.twoelecint_mo[:occ,:occ,:occ,:occ])
+        Iovvo = cp.deepcopy(self.data.twoelecint_mo[:occ,occ:nao,occ:nao,:occ])
+        Iovvo_2 = cp.deepcopy(self.data.twoelecint_mo[:occ,occ:nao,occ:nao,:occ])
+        Iovov = cp.deepcopy(self.data.twoelecint_mo[:occ,occ:nao,:occ,occ:nao])
+        Iovov_2 = cp.deepcopy(self.data.twoelecint_mo[:occ,occ:nao,:occ,occ:nao])
+        return I_vv, I_oo, Ivvvv, Ioooo, Iovvo, Iovvo_2, Iovov, Iovov_2
+     
+        I_vv = None
+        I_oo = None
+        Ivvvv = None
+        Ioooo = None
+        Iovvo = None
+        Iovvo_2 = None
+        Iovov = None
+        Iovov_2 = None
+        I_oovo = None
+        I_vovv = None
+        gc.collect()
+
+    def update_int(self,I_vv,I_oo,Ioooo,Iovvo,Iovvo_2,Iovov, order):
+
+	occ = self.nocc
+	nao = self.nao
+	
+	if (order == 0):
+	    t2 = self.data.t2
+	elif(order == 1):
+	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+
+
+        I_vv = -2*np.einsum('cdkl,klad->ca',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t2) + np.einsum('cdkl,klda->ca',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t2)
+     
+        I_oo = 2*np.einsum('cdkl,ilcd->ik',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t2) - np.einsum('dckl,lidc->ik',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t2) 
+     
+        Ioooo = np.einsum('cdkl,ijcd->ijkl',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t2)
+     
+        Iovvo = np.einsum('dclk,jlbd->jcbk',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t2) - np.einsum('dclk,jldb->jcbk',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t2) - 0.5*np.einsum('cdlk,jlbd->jcbk',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t2)
+     
+        Iovvo_2 = -0.5*np.einsum('dclk,jldb->jcbk',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t2)  - np.einsum('dckl,ljdb->jcbk',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t2)
+      
+        Iovov = -0.5*np.einsum('dckl,ildb->ickb',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t2)
+
+        return I_oo,I_vv,Ioooo,Iovvo,Iovvo_2,Iovov
+     
+        I_vv = None
+        I_oo = None
+        Iovvo = None
+        Iovvo_2 = None
+        Iovov = None
+        gc.collect()
+  
+    def R_ia_intermediates(self, order):
+
+	occ = self.nocc
+	nao = self.nao
+
+	if (order == 0):
+	    t1 = self.data.t1
+	elif(order == 1):
+	    t1 = self.data.dict_r_t1[self.r, self.iroot]
+
+        I1 = 2*np.einsum('cbkj,kc->bj',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t1)
+        I2 = -np.einsum('cbjk,kc->bj',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t1)
+        return I1,I2
+     
+        I1 = None
+        I2 = None
+  
+    def singles_intermediates(self,I_oo,I_vv,rank_t1,order):
+
+	occ = self.nocc
+	nao = self.nao
+	virt = self.nvirt
+
+	if (order == 0):
+	    t1 = self.data.t1
+	    t2 = self.data.t2
+	elif(order == 1):
+	    t1 = self.data.dict_r_t1[self.r, self.iroot]
+	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+
+        if (rank_t1 > 0):
+            I_oo += 2*np.einsum('ibkj,jb->ik',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],t1)    #intermediate for diagrams 5
+            I_oo += -np.einsum('ibjk,jb->ik',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],t1)     #intermediate for diagrams 8
+
+            I_vv += 2*np.einsum('bcja,jb->ca',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ:nao],t1)    #intermediate for diagrams 6
+            I_vv += -np.einsum('cbja,jb->ca',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ:nao],t1)    #intermediate for diagrams 7
+       #if (rank_t1 > 1):
+       #    I_vv += -2*np.einsum('dclk,ld,ka->ca',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t1,t1)  #intermediate for diagram 34'
+        
+        I_oovo = np.zeros((occ,occ,virt,occ))
+        I_oovo += -np.einsum('cikl,jlca->ijak',self.data.twoelecint_mo[occ:nao,:occ,:occ,:occ],t2)    #intermediate for diagrams 11
+        I_oovo += np.einsum('cdka,jicd->ijak',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ:nao],t2)    #intermediate for diagrams 12
+        I_oovo += -np.einsum('jclk,lica->ijak',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],t2)    #intermediate for diagrams 13
+        I_oovo += 2*np.einsum('jckl,ilac->ijak',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],t2)    #intermediate for diagrams 15
+        I_oovo += -np.einsum('jckl,ilca->ijak',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],t2)    #intermediate for diagrams 17
+        
+        I_vovv = np.zeros((virt,occ,virt,virt))
+        I_vovv += np.einsum('cjkl,klab->cjab',self.data.twoelecint_mo[occ:nao,:occ,:occ,:occ],t2)    #intermediate for diagrams 9
+        I_vovv += -np.einsum('cdlb,ljad->cjab',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ:nao],t2)    #intermediate for diagrams 10
+        I_vovv += -np.einsum('cdka,kjdb->cjab',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ:nao],t2)    #intermediate for diagrams 14
+        I_vovv += 2*np.einsum('cdal,ljdb->cjab',self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,:occ],t2)    #intermediate for diagrams 16
+        I_vovv += -np.einsum('cdal,jldb->cjab',self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,:occ],t2)    #intermediate for diagrams 18
+     
+	return I_oo, I_vv, I_oovo, I_vovv
+	I_oo = None
+	I_vv = None
+	I_oovo = None
+	I_vovv = None
+class amplitude_response(object):
+    def __init__(self, data, r, iroot):
+
+	self.nao = data.nao
+	self.nocc = data.nocc
+	self.nvirt = data.nvirt
+	self.no_act = data.no_act
+
+	self.data = data
+	self.nv_act = data.nv_act
+	self.n_act = self.no_act + self.nv_act
+
+	self.data = data
+
+	self.r = r
+	self.iroot = iroot
+
+    def singles_linear(self,I_oo,I_vv):
+
+	occ = self.nocc
+	nao = self.nao
+
+	t1 = self.data.dict_r_t1[self.r, self.iroot]
+	t2 = self.data.dict_r_t2[self.r, self.iroot]
+
+        R_ia = -np.einsum('ik,ka->ia',I_oo,t1) #diagrams 1
+        R_ia += np.einsum('ca,ic->ia',I_vv,t1) #diagrams 2
+        R_ia += 2*np.einsum('icak,kc->ia',self.data.twoelecint_mo[:occ,occ:nao,occ:nao,:occ],t1) #diagram 3
+        R_ia += -np.einsum('icka,kc->ia',self.data.twoelecint_mo[:occ,occ:nao,:occ,occ:nao],t1) #diagram 4
+        R_ia += -2*np.einsum('ibkj,kjab->ia',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],t2) #diagrams 5
+        R_ia += np.einsum('ibkj,jkab->ia',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],t2) #diagrams 6
+        R_ia += 2*np.einsum('cdak,ikcd->ia',self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,:occ],t2) #diagrams 7
+        R_ia += -np.einsum('cdak,ikdc->ia',self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,:occ],t2) #diagrams 8
+        return R_ia
+     
+        R_ia = None
+        I_oo = None
+        I_vv = None
+        gc.collect()
+
+    def doubles_linear(self,I_oo,I_vv,Ivvvv,Ioooo,Iovvo,Iovvo_2,Iovov,Iovov_2,rank_t1):
+
+	occ = self.nocc
+	nao = self.nao
+
+	t1 = self.data.dict_r_t1[self.r, self.iroot]
+	t2 = self.data.dict_r_t2[self.r, self.iroot]
+
+        R_ijab = -np.einsum('ik,kjab->ijab',I_oo,t2) #diagrams 1
+        R_ijab += np.einsum('ca,ijcb->ijab',I_vv,t2) #diagrams 2
+	if (rank_t1 > 0):
+            R_ijab += -np.einsum('ijkb,ka->ijab',self.data.twoelecint_mo[:occ,:occ,:occ,occ:nao],t1) #diagram 3
+            R_ijab += np.einsum('cjab,ic->ijab',self.data.twoelecint_mo[occ:nao,:occ,occ:nao,occ:nao],t1) #diagram
+        R_ijab += 0.5*np.einsum('cdab,ijcd->ijab',Ivvvv,t2) #diagrams 5
+        R_ijab += 2*np.einsum('jcbk,kica->ijab',Iovvo,t2) #diagrams 6
+        R_ijab += -np.einsum('icka,kjcb->ijab',Iovov_2,t2) #diagram 7
+        R_ijab += - np.einsum('jcbk,ikca->ijab',Iovvo_2,t2) #diagrams 8
+        R_ijab += 0.5*np.einsum('ijkl,klab->ijab',Ioooo,t2) #diagrams 9
+        R_ijab += - np.einsum('ickb,kjac->ijab',Iovov,t2) #diagrams 10
+
+        return R_ijab
+     
+        R_ijab = None
+        I_oo = None
+        I_vv = None
+        Ivvvv = None
+        Ioooo = None
+        Iovvo = None
+        Iovvo_2 = None
+        Iovov = None
+        Iovov_2 = None
+        gc.collect()
+
+    def singles_quadratic(self,I_oo,I_vv, I1, I2, order):
+
+	occ = self.nocc
+	nao = self.nao
+
+	if (order == 0):
+	    t1 = self.data.t1
+	    t2 = self.data.t2
+	elif(order == 1):
+	    t1 = self.data.dict_r_t1[self.r, self.iroot]
+	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+
+
+        R_ia = -np.einsum('ik,ka->ia',I_oo,t1) #diagrams l,j
+        R_ia += np.einsum('ca,ic->ia',I_vv,t1) #diagrams k,i
+        R_ia += 2*np.einsum('bj,ijab->ia',I1,t2) - np.einsum('bj,ijba->ia',I1,t2)     #diagrams e,f
+        R_ia += 2*np.einsum('bj,ijab->ia',I2,t2) - np.einsum('bj,ijba->ia',I2,t2)     #diagrams g,h
+        return R_ia
+     
+        R_ia = None
+        I_oo = None
+        I_vv = None
+        I1 = None
+        I2 = None
+        gc.collect()
+
+    def singles_coupled_order(self):
+
+	occ = self.nocc
+	nao = self.nao
+
+	t1_0 = self.data.t1
+	t1_1 = self.data.dict_r_t1[self.r, self.iroot]
+
+        R_ia = -2*np.einsum('ibkj,ka,jb->ia',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],t1_0,t1_1)       #diagram non-linear a
+        R_ia +=  2*np.einsum('cbaj,ic,jb->ia',self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,:occ],t1_0,t1_1) #diagram non-linear c
+        R_ia +=  np.einsum('ibjk,ka,jb->ia',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],t1_0,t1_1)         #diagram non-linear b
+        R_ia += -np.einsum('cbja,ic,jb->ia',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ:nao],t1_0,t1_1)   #diagram non-linear d
+    
+        R_ia += -2*np.einsum('ibkj,ka,jb->ia',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],t1_1,t1_0)
+        R_ia +=  2*np.einsum('cbaj,ic,jb->ia',self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,:occ],t1_1,t1_0)
+        R_ia +=  np.einsum('ibjk,ka,jb->ia',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],t1_1,t1_0)
+        R_ia += -np.einsum('cbja,ic,jb->ia',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ:nao],t1_1,t1_0)
+	return R_ia
+
+	R_ia = None
+
+    def doubles_quadratic(self,I_oo,I_vv,Ioooo,Iovvo,Iovvo_2,Iovov, order):
+
+	occ = self.nocc
+	nao = self.nao
+
+	if (order == 0):
+	    t2 = self.data.t2
+	elif(order == 1):
+	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+
+        R_ijab = -np.einsum('ik,kjab->ijab',I_oo,t2)     #diagrams 25,27,5,8
+        R_ijab += np.einsum('ca,ijcb->ijab',I_vv,t2)     #diagrams 24,26,6,7
+        R_ijab += 0.5*np.einsum('ijkl,klab->ijab',Ioooo,t2)    #diagram 22 
+        R_ijab += 2*np.einsum('jcbk,kica->ijab',Iovvo,t2)      #diagram 19,28,20   
+        R_ijab += - np.einsum('jcbk,ikca->ijab',Iovvo_2,t2)    #diagram 21,29 
+        R_ijab += - np.einsum('ickb,kjac->ijab',Iovov,t2)      #diagram 23 
+        return R_ijab
+   
+        R_ijab = None
+        I_oo = None
+        I_vv = None
+        Ioooo = None
+        Iovvo =None
+        Iovvo_2 = None
+        Iovov = None
+        gc.collect()
+
+    def singles_n_doubles(self,I_oovo,I_vovv, order):
+
+	occ = self.nocc
+	nao = self.nao
+
+	if (order == 0):
+	    t1 = self.data.t1
+	elif(order == 1):
+	    t1 = self.data.dict_r_t1[self.r, self.iroot]
+
+        R_ijab = -np.einsum('ijak,kb->ijab',I_oovo,t1)       #diagrams 11,12,13,15,17
+        R_ijab += np.einsum('cjab,ic->ijab',I_vovv,t1)       #diagrams 9,10,14,16,18
+        return R_ijab
+     
+        R_ijab = None
+        I_oovo = None
+        I_vovv = None
+        gc.collect() 
+    
+    def singles_to_doubles(self):
+
+	occ = self.nocc
+	nao = self.nao
+
+	t1_0 = self.data.t1
+	t1_1 = self.data.dict_r_t1[self.r, self.iroot]
+
+        R_ijab = 0.5*np.einsum('ijkl,ka,lb->ijab',self.data.twoelecint_mo[:occ,:occ,:occ,:occ],t1_0,t1_1)      #diagram non-linear 1
+        R_ijab += 0.5*np.einsum('cdab,ic,jd->ijab',self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,occ:nao],t1_0,t1_1)  #diagram non-linear 2
+        R_ijab += -np.einsum('ickb,ka,jc->ijab',self.data.twoelecint_mo[:occ,occ:nao,:occ,occ:nao],t1_0,t1_1)   #diagrams non-linear 3
+        R_ijab += -np.einsum('icak,jc,kb->ijab',self.data.twoelecint_mo[:occ,occ:nao,occ:nao,:occ],t1_0,t1_1)   #diagrams non-linear 4
+    
+        R_ijab += 0.5*np.einsum('ijkl,ka,lb->ijab',self.data.twoelecint_mo[:occ,:occ,:occ,:occ],t1_1,t1_0)      #diagram non-linear 1
+        R_ijab += 0.5*np.einsum('cdab,ic,jd->ijab',self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,occ:nao],t1_1,t1_0)  #diagram non-linear 2
+        R_ijab += -np.einsum('ickb,ka,jc->ijab',self.data.twoelecint_mo[:occ,occ:nao,:occ,occ:nao],t1_1,t1_0)   #diagrams non-linear 3
+        R_ijab += -np.einsum('icak,jc,kb->ijab',self.data.twoelecint_mo[:occ,occ:nao,occ:nao,:occ],t1_1,t1_0)   #diagrams non-linear 4
+  
+	return R_ijab
+
+	R_ijab = None
+
