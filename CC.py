@@ -332,6 +332,7 @@ class state():
 	    self.root_info = [1]
 	    self.nDavidson = 40
             self.conv = cc_main.conv
+            self.tUseOtherRoots = False
 
         def init_all_data(self, cc, data, ind):
 
@@ -485,9 +486,17 @@ class state():
 	    else: 
 	      print 'Only possible for one- and two-body excitations'
 
-	    for m in range(0,r+1):
-	      loc = m*nroot+iroot
-	      dict_x_t[iroot] += np.linalg.multi_dot([self.dict_coeff_total[iroot][loc],dict_t[m,iroot]])
+            if (self.tUseOtherRoots):
+              print 'tUseOtherRoots: ', self.tUseOtherRoots
+	      for m in range(0,r+1):
+                for jroot in range(0, nroot):
+	          loc = m*nroot+jroot
+	          dict_x_t[iroot] += np.linalg.multi_dot([self.dict_coeff_total[iroot][loc],dict_t[m,jroot]])
+            else: 
+              print 'tUseOtherRoots: ', self.tUseOtherRoots
+	      for m in range(0,r+1):
+	        loc = m*nroot+iroot
+	        dict_x_t[iroot] += np.linalg.multi_dot([self.dict_coeff_total[iroot][loc],dict_t[m,iroot]])
 
 	  return dict_x_t
 
@@ -547,8 +556,6 @@ class state():
 	    if (cc.rank_t1 >  0):
 	      # The ordering of the arguments is important here
 	      self.dict_x_t2[iroot], self.dict_x_t1[iroot] = self.normalise_vector(self.dict_x_t2[iroot], self.dict_x_t1[iroot])
-              print self.dict_x_t2[iroot]
-              print self.dict_x_t1[iroot]
 	    else:
 	      self.dict_x_t2[iroot] = self.normalise_vector(self.dict_x_t2[iroot])
             
@@ -766,7 +773,6 @@ class state():
          data.B_Y_ijab = np.zeros((nroot*(r+1),nroot*(r+1)))
          for iroot in range(0,nroot):
            data.dict_r_t2[r, iroot] = self.dict_x_t2[iroot]
-           print data.dict_r_t2[r, iroot]
 
          if (cc.rank_t1 > 0):
            data.dict_Y_ia.clear()
@@ -775,7 +781,6 @@ class state():
           
            for iroot in range(0,self.nroot):
              data.dict_r_t1[r, iroot] = self.dict_x_t1[iroot]
-             print data.dict_r_t1[r, iroot]
 
 	def exc_energy_sym(self, ind):
 

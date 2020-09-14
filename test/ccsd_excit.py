@@ -15,8 +15,8 @@ atom ='''
 Li  0.000000,  0.000000, -0.3797714041
 H   0.000000,  0.000000,  2.6437904102
 ''',
-#basis = 'sto-3g',
-basis = 'cc-pVDZ',
+basis = 'sto-3g',
+#basis = 'cc-pVDZ',
 symmetry = 'C2v',
 )
 
@@ -38,10 +38,9 @@ cc_res.maxiter = 50
 
 cc_res.energy.run()
 
-cc_res.exc_en.root_info = [2,0,0,0]
+cc_res.exc_en.root_info = [1,0,0,0]
 cc_res.maxiter = 30
 cc_res.exc_en.conv = 1e-6
-cc_res.exc_en.nDavidson=8
-#cc_res.exc_en.tUseOtherRoots=True
+cc_res.exc_en.nDavidson=40
 cc_res.exc_en.run()
 

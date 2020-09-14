@@ -1,0 +1,380 @@
+#INFO: **** input file is /vortex/u/sprad/programs/iccsdn_modules/calc.py ****
+import pyscf
+from pyscf import gto, scf
+import MP2
+import CC
+
+##---------------------------------------------------------##
+             #Specify geometry and basis set#       
+##---------------------------------------------------------##
+
+mol = pyscf.gto.M(
+verbose = 5,
+output = None,
+unit='Bohr',
+atom ='''
+Li  0.000000,  0.000000, -0.3797714041
+H   0.000000,  0.000000,  2.6437904102
+''',
+basis = 'sto-3g',
+#basis = 'cc-pVDZ',
+symmetry = 'C2v',
+)
+
+##---------------------------------------------------------##
+
+mf = scf.RHF(mol).run()
+
+#mp2_res = MP2.MP2(mf)
+#mp2_res.nfo = 1
+#mp2_res.run()
+
+cc_res = CC.state(mf)
+cc_res.variant = 'CCSD'
+if (cc_res.variant == 'ICCSD'):
+    cc_res.no_act = 1
+    cc_res.nv_act = 1
+cc_res.max_diis = 7
+cc_res.maxiter = 50
+
+cc_res.energy.run()
+
+cc_res.exc_en.root_info = [1,0,0,0]
+cc_res.maxiter = 30
+cc_res.exc_en.conv = 1e-6
+cc_res.exc_en.nDavidson=40
+cc_res.exc_en.run()
+
+#INFO: ******************** input file end ********************
+
+
+System: ('Linux', 'vortex02', '4.12.14-122.20-default', '#1 SMP Fri Apr 17 10:07:01 UTC 2020 (29f4f19)', 'x86_64', 'x86_64')  Threads 40
+Python 2.7.13 |Anaconda custom (64-bit)| (default, Dec 20 2016, 23:09:15) 
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-1)]
+numpy 1.11.3  scipy 0.18.1
+Date: Mon Sep 14 08:00:24 2020
+PySCF version 1.5b
+PySCF path  /u/sprad/programs/pyscf/pyscf
+GIT HEAD      ref: refs/heads/dev
+GIT dev branch  b90b419bb225d9e2501b95adb92bd5b11f570c58
+
+[CONFIG] conf_file None
+[INPUT] verbose = 5
+[INPUT] num. atoms = 2
+[INPUT] num. electrons = 4
+[INPUT] charge = 0
+[INPUT] spin (= nelec alpha-beta = 2S) = 0
+[INPUT] symmetry C2v subgroup None
+[INPUT]  1 Li     0.000000000000   0.000000000000  -0.200966372409 AA    0.000000000000   0.000000000000  -0.379771404100 Bohr
+[INPUT]  2 H      0.000000000000   0.000000000000   1.399033635527 AA    0.000000000000   0.000000000000   2.643790410200 Bohr
+[INPUT] ---------------- BASIS SET ---------------- 
+[INPUT] l, kappa, [nprim/nctr], expnt,             c_1 c_2 ...
+[INPUT] H
+[INPUT] 0    0    [3    /1   ]  3.42525091        0.15432897
+                                0.62391373        0.53532814
+                                0.1688554         0.44463454
+[INPUT] Li
+[INPUT] 0    0    [3    /1   ]  16.119575         0.15432897
+                                2.9362007         0.53532814
+                                0.7946505         0.44463454
+[INPUT] 0    0    [3    /1   ]  0.6362897         -0.09996723
+                                0.1478601         0.39951283
+                                0.0480887         0.70011547
+[INPUT] 1    0    [3    /1   ]  0.6362897         0.15591627
+                                0.1478601         0.60768372
+                                0.0480887         0.39195739
+
+nuclear repulsion = 0.992207265553969
+point group symmetry = C2v
+num. orbitals of irrep A1 = 4
+num. orbitals of irrep B1 = 1
+num. orbitals of irrep B2 = 1
+number of shells = 4
+number of NR pGTOs = 18
+number of NR cGTOs = 6
+basis = sto-3g
+ecp = {}
+CPU time:         0.23
+
+
+******** <class 'pyscf.scf.hf_symm.SymAdaptedRHF'> flags ********
+method = SymAdaptedRHF-RHF
+initial guess = minao
+damping factor = 0
+level shift factor = 0
+DIIS = <class 'pyscf.scf.diis.CDIIS'>
+DIIS start cycle = 1
+DIIS space = 8
+SCF tol = 1e-09
+SCF gradient tol = None
+max. SCF cycles = 50
+direct_scf = True
+direct_scf_tol = 1e-13
+chkfile to save SCF result = /vortex/u/sprad/programs/iccsdn_modules/tmp_Ve4Ch
+max_memory 4000 MB (current use 51 MB)
+Freeze 0 electrons in irreps []
+    4 free electrons in irreps A1 B1 B2
+Set gradient conv threshold to 3.16228e-05
+cond(S) = 4.85497030401
+E_coul = 3.51939591163125
+init E= -7.59823111760027
+    CPU time for initialize scf      0.77 sec, wall time      0.04 sec
+HOMO (A1) = -0.274591576217248  LUMO (A1) = 0.0284774166981539
+irrep_nelec = [4, 0, 0]
+A1 nocc = 2  HOMO = -0.274591576217248  LUMO = 0.0284774166981539
+   mo_energy = [-2.37085501 -0.27459158  0.02847742  0.44038571]
+B1 nocc = 0
+   mo_energy = [ 0.14352772]
+B2 nocc = 0
+   mo_energy = [ 0.14352772]
+E_coul = 3.59491402199721
+cycle= 1 E= -7.85334746181494  delta_E= -0.255  |g|= 0.104  |ddm|= 1.09
+    CPU time for cycle= 1      0.30 sec, wall time      0.01 sec
+HOMO (A1) = -0.273156932945011  LUMO (A1) = 0.0748655544131328
+irrep_nelec = [4, 0, 0]
+A1 nocc = 2  HOMO = -0.273156932945011  LUMO = 0.0748655544131328
+   mo_energy = [-2.35539396 -0.27315693  0.07486555  0.55665465]
+B1 nocc = 0
+   mo_energy = [ 0.16143603]
+B2 nocc = 0
+   mo_energy = [ 0.16143603]
+E_coul = 3.58263188770553
+cycle= 2 E= -7.86099720529181  delta_E= -0.00765  |g|= 0.0211  |ddm|= 0.24
+    CPU time for cycle= 2      0.23 sec, wall time      0.01 sec
+HOMO (A1) = -0.289026615523957  LUMO (A1) = 0.0786166029596661
+irrep_nelec = [4, 0, 0]
+A1 nocc = 2  HOMO = -0.289026615523957  LUMO = 0.0786166029596661
+   mo_energy = [-2.34765377 -0.28902662  0.0786166   0.54361292]
+B1 nocc = 0
+   mo_energy = [ 0.16324727]
+B2 nocc = 0
+   mo_energy = [ 0.16324727]
+E_coul = 3.58388375260669
+cycle= 3 E= -7.86170222121485  delta_E= -0.000705  |g|= 0.00779  |ddm|= 0.067
+    CPU time for cycle= 3      0.18 sec, wall time      0.00 sec
+HOMO (A1) = -0.285157540367757  LUMO (A1) = 0.0782994102293019
+irrep_nelec = [4, 0, 0]
+A1 nocc = 2  HOMO = -0.285157540367757  LUMO = 0.0782994102293019
+   mo_energy = [-2.34887934 -0.28515754  0.07829941  0.54781178]
+B1 nocc = 0
+   mo_energy = [ 0.16390718]
+B2 nocc = 0
+   mo_energy = [ 0.16390718]
+E_coul = 3.58588764507359
+cycle= 4 E= -7.8618646162001  delta_E= -0.000162  |g|= 0.000339  |ddm|= 0.0501
+    CPU time for cycle= 4      0.32 sec, wall time      0.01 sec
+HOMO (A1) = -0.285275680275745  LUMO (A1) = 0.078204550853401
+irrep_nelec = [4, 0, 0]
+A1 nocc = 2  HOMO = -0.285275680275745  LUMO = 0.078204550853401
+   mo_energy = [-2.34875887 -0.28527568  0.07820455  0.54769449]
+B1 nocc = 0
+   mo_energy = [ 0.16394396]
+B2 nocc = 0
+   mo_energy = [ 0.16394396]
+E_coul = 3.58601985362931
+cycle= 5 E= -7.8618647672006  delta_E= -1.51e-07  |g|= 4.21e-05  |ddm|= 0.00165
+    CPU time for cycle= 5      0.35 sec, wall time      0.01 sec
+HOMO (A1) = -0.285271106177794  LUMO (A1) = 0.0782159694343396
+irrep_nelec = [4, 0, 0]
+A1 nocc = 2  HOMO = -0.285271106177794  LUMO = 0.0782159694343396
+   mo_energy = [-2.34876196 -0.28527111  0.07821597  0.54770923]
+B1 nocc = 0
+   mo_energy = [ 0.16394145]
+B2 nocc = 0
+   mo_energy = [ 0.16394145]
+E_coul = 3.58600723469775
+cycle= 6 E= -7.86186476954373  delta_E= -2.34e-09  |g|= 1.61e-06  |ddm|= 0.000172
+    CPU time for cycle= 6      0.36 sec, wall time      0.01 sec
+HOMO (A1) = -0.285270735722829  LUMO (A1) = 0.0782165834851534
+irrep_nelec = [4, 0, 0]
+A1 nocc = 2  HOMO = -0.285270735722829  LUMO = 0.0782165834851534
+   mo_energy = [-2.34876194 -0.28527074  0.07821658  0.54770843]
+B1 nocc = 0
+   mo_energy = [ 0.16394134]
+B2 nocc = 0
+   mo_energy = [ 0.16394134]
+E_coul = 3.58600663907449
+cycle= 7 E= -7.86186476954976  delta_E= -6.03e-12  |g|= 7.55e-08  |ddm|= 1.01e-05
+    CPU time for cycle= 7      0.34 sec, wall time      0.01 sec
+HOMO (A1) = -0.285270765945003  LUMO (A1) = 0.0782165649169127
+irrep_nelec = [4, 0, 0]
+A1 nocc = 2  HOMO = -0.285270765945003  LUMO = 0.0782165649169127
+   mo_energy = [-2.34876193 -0.28527077  0.07821656  0.54770839]
+B1 nocc = 0
+   mo_energy = [ 0.16394135]
+B2 nocc = 0
+   mo_energy = [ 0.16394135]
+E_coul = 3.58600665597797
+Extra cycle  E= -7.86186476954977  delta_E= -1.07e-14  |g|= 2.13e-08  |ddm|= 2.16e-07
+    CPU time for scf_cycle      3.16 sec, wall time      0.10 sec
+    CPU time for SCF      3.16 sec, wall time      0.10 sec
+converged SCF energy = -7.86186476954977
+MO conversion successful
+**** RUNNING CCSD ****
+irreps of each MO [0 0 0 2 3 0]
+irreps of each MO [0 0 0 2 3 0]
+ 
+cycle number : 1
+change in t1 and t2 : 0.011072971883
+energy difference : 7.84450388447
+energy : -7.87922565463
+ 
+cycle number : 2
+change in t1 and t2 : 0.00438698435434
+energy difference : -0.00170401036744
+energy : -7.88092966499
+ 
+cycle number : 3
+change in t1 and t2 : 0.00226189941122
+energy difference : -0.000690374448226
+energy : -7.88162003944
+ 
+cycle number : 4
+change in t1 and t2 : 0.00124213995116
+energy difference : -0.000306609654783
+energy : -7.8819266491
+ 
+cycle number : 5
+change in t1 and t2 : 0.000743286445135
+energy difference : -0.000150958046614
+energy : -7.88207760714
+ 
+cycle number : 6
+change in t1 and t2 : 0.000483022125427
+energy difference : -8.26824803067e-05
+energy : -7.88216028962
+ 
+cycle number : 7
+change in t1 and t2 : 0.000350453143612
+energy difference : -4.96442504339e-05
+energy : -7.88220993387
+ 
+[ 0.  0.  0.  0.  0.  0. -1.]
+cycle number : 8
+change in t1 and t2 : 0.000254209375539
+energy difference : -3.19018551985e-05
+energy : -7.88224183573
+ 
+[ 0.  0.  0.  0.  0.  0. -1.]
+cycle number : 9
+change in t1 and t2 : 0.000183028208085
+energy difference : -2.14304728904e-05
+energy : -7.8822632662
+ 
+[ 0.  0.  0.  0.  0.  0. -1.]
+cycle number : 10
+change in t1 and t2 : 0.000131260469512
+energy difference : -1.47858924018e-05
+energy : -7.88227805209
+ 
+[ 0.  0.  0.  0.  0.  0. -1.]
+cycle number : 11
+change in t1 and t2 : 9.39360271426e-05
+energy difference : -1.0358708888e-05
+energy : -7.8822884108
+ 
+[ 0.  0.  0.  0.  0.  0. -1.]
+cycle number : 12
+change in t1 and t2 : 6.71478788922e-05
+energy difference : -7.31916256305e-06
+energy : -7.88229572997
+ 
+[ 0.  0.  0.  0.  0.  0. -1.]
+cycle number : 13
+change in t1 and t2 : 4.796884657e-05
+energy difference : -5.19570227109e-06
+energy : -7.88230092567
+ 
+[ 0.  0.  0.  0.  0.  0. -1.]
+cycle number : 14
+change in t1 and t2 : 3.42558709e-05
+energy difference : -1.2896040878e-05
+energy : -7.88231382171
+ 
+[ 0.  0.  0.  0.  0.  0. -1.]
+ccsd converged!!!
+Total energy is : -7.88231382171
+**** CCSD is done ****
+Response amplitudes are initiated
+---------------------------------------------------------
+               Molecular point group   0
+    Linear Response iteration begins for symmetry   0
+---------------------------------------------------------
+
+-------------------------------------------------
+          Iteration number 0
+          Subspace vector 0
+-------------------------------------------------
+             ------------------------
+EPS for IROOT : 1   IS:  0.0559040352472
+Eigenvalue for IROOT : 1   IS:   0.190260980919  a.u.  5.17726459299  eV
+             ------------------------
+
+-------------------------------------------------
+          Iteration number 1
+          Subspace vector 1
+-------------------------------------------------
+             ------------------------
+EPS for IROOT : 1   IS:  0.0229608892831
+Eigenvalue for IROOT : 1   IS:   0.137445658871  a.u.  3.74008658894  eV
+             ------------------------
+
+-------------------------------------------------
+          Iteration number 2
+          Subspace vector 2
+-------------------------------------------------
+             ------------------------
+EPS for IROOT : 1   IS:  0.00651537113195
+Eigenvalue for IROOT : 1   IS:   0.132819938172  a.u.  3.61421432717  eV
+             ------------------------
+
+-------------------------------------------------
+          Iteration number 3
+          Subspace vector 3
+-------------------------------------------------
+             ------------------------
+EPS for IROOT : 1   IS:  0.00209492332366
+Eigenvalue for IROOT : 1   IS:   0.132743126474  a.u.  3.61212417456  eV
+             ------------------------
+
+-------------------------------------------------
+          Iteration number 4
+          Subspace vector 4
+-------------------------------------------------
+             ------------------------
+EPS for IROOT : 1   IS:  0.000273059404344
+Eigenvalue for IROOT : 1   IS:   0.13279159902  a.u.  3.61344317963  eV
+             ------------------------
+
+-------------------------------------------------
+          Iteration number 5
+          Subspace vector 5
+-------------------------------------------------
+             ------------------------
+EPS for IROOT : 1   IS:  4.87580406308e-05
+Eigenvalue for IROOT : 1   IS:   0.132793883272  a.u.  3.61350533729  eV
+             ------------------------
+
+-------------------------------------------------
+          Iteration number 6
+          Subspace vector 6
+-------------------------------------------------
+             ------------------------
+EPS for IROOT : 1   IS:  1.3457767288e-05
+Eigenvalue for IROOT : 1   IS:   0.132792832134  a.u.  3.61347673437  eV
+             ------------------------
+
+-------------------------------------------------
+          Iteration number 7
+          Subspace vector 7
+-------------------------------------------------
+             ------------------------
+EPS for IROOT : 1   IS:  6.89219545869e-07
+Eigenvalue for IROOT : 1   IS:   0.132792485264  a.u.  3.61346729556  eV
+             ------------------------
+!!!!!!!!!!CONVERGED!!!!!!!!!!!!
+Excitation Energy for sym 0 iroot 1  : 0.132792485264  a.u.  3.61346729556  eV
+Done calculation for  0
+Done calculation for  1
+Done calculation for  2
+Done calculation for  3
