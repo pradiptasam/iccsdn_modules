@@ -1008,7 +1008,7 @@ class state():
         self.x = x
         self.r = x%self.cc_main.maxsub
         self.nroot = self.root_info[ind]
-        self.print_statements(2, ind)
+        #self.print_statements(2, ind)
         self.isym = ind
 
         if (x>0 and self.r==0):

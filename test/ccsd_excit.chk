@@ -1,8 +1,19 @@
-#INFO: **** input file is /vortex/u/sprad/programs/iccsdn_modules/calc.py ****
+#INFO: **** input file is /vortex/u/sprad/programs/iccsdn_modules/test/ccsd_excit.py ****
+import os 
+
+_pythonpath = os.environ['PYTHONPATH']
+
+_present_in_pythonpath =  _pythonpath.find('iccsdn_module') >= 0
+
+if (_present_in_pythonpath):
+  import CC
+  import MP2
+else:
+  from pyscf.iccsdn import CC
+  from pyscf.iccsdn import MP2
+
 import pyscf
 from pyscf import gto, scf
-import MP2
-import CC
 
 ##---------------------------------------------------------##
              #Specify geometry and basis set#       
@@ -34,15 +45,18 @@ cc_res.variant = 'CCSD'
 if (cc_res.variant == 'ICCSD'):
     cc_res.no_act = 1
     cc_res.nv_act = 1
-cc_res.max_diis = 7
+
+cc_res.maxsub = 7
+#cc_res.conv = 1e-7
 cc_res.maxiter = 50
 
 cc_res.energy.run()
 
-cc_res.exc_en.root_info = [1,0,0,0]
 cc_res.maxiter = 30
-cc_res.exc_en.conv = 1e-6
-cc_res.exc_en.nDavidson=40
+cc_res.conv = 1e-6
+cc_res.maxsub=40
+
+cc_res.exc_en.root_info = [1,0,0,0]
 cc_res.exc_en.run()
 
 #INFO: ******************** input file end ********************
@@ -52,7 +66,7 @@ System: ('Linux', 'vortex02', '4.12.14-122.20-default', '#1 SMP Fri Apr 17 10:07
 Python 2.7.13 |Anaconda custom (64-bit)| (default, Dec 20 2016, 23:09:15) 
 [GCC 4.4.7 20120313 (Red Hat 4.4.7-1)]
 numpy 1.11.3  scipy 0.18.1
-Date: Mon Sep 14 08:00:24 2020
+Date: Mon Sep 28 17:20:44 2020
 PySCF version 1.5b
 PySCF path  /u/sprad/programs/pyscf/pyscf
 GIT HEAD      ref: refs/heads/dev
@@ -94,7 +108,7 @@ number of NR pGTOs = 18
 number of NR cGTOs = 6
 basis = sto-3g
 ecp = {}
-CPU time:         0.23
+CPU time:         0.26
 
 
 ******** <class 'pyscf.scf.hf_symm.SymAdaptedRHF'> flags ********
@@ -110,7 +124,7 @@ SCF gradient tol = None
 max. SCF cycles = 50
 direct_scf = True
 direct_scf_tol = 1e-13
-chkfile to save SCF result = /vortex/u/sprad/programs/iccsdn_modules/tmp_Ve4Ch
+chkfile to save SCF result = /vortex/u/sprad/programs/iccsdn_modules/test/tmp8DyzQG
 max_memory 4000 MB (current use 51 MB)
 Freeze 0 electrons in irreps []
     4 free electrons in irreps A1 B1 B2
@@ -118,7 +132,7 @@ Set gradient conv threshold to 3.16228e-05
 cond(S) = 4.85497030401
 E_coul = 3.51939591163125
 init E= -7.59823111760027
-    CPU time for initialize scf      0.77 sec, wall time      0.04 sec
+    CPU time for initialize scf      0.71 sec, wall time      0.04 sec
 HOMO (A1) = -0.274591576217248  LUMO (A1) = 0.0284774166981539
 irrep_nelec = [4, 0, 0]
 A1 nocc = 2  HOMO = -0.274591576217248  LUMO = 0.0284774166981539
@@ -129,7 +143,7 @@ B2 nocc = 0
    mo_energy = [ 0.14352772]
 E_coul = 3.59491402199721
 cycle= 1 E= -7.85334746181494  delta_E= -0.255  |g|= 0.104  |ddm|= 1.09
-    CPU time for cycle= 1      0.30 sec, wall time      0.01 sec
+    CPU time for cycle= 1      0.27 sec, wall time      0.01 sec
 HOMO (A1) = -0.273156932945011  LUMO (A1) = 0.0748655544131328
 irrep_nelec = [4, 0, 0]
 A1 nocc = 2  HOMO = -0.273156932945011  LUMO = 0.0748655544131328
@@ -140,7 +154,7 @@ B2 nocc = 0
    mo_energy = [ 0.16143603]
 E_coul = 3.58263188770553
 cycle= 2 E= -7.86099720529181  delta_E= -0.00765  |g|= 0.0211  |ddm|= 0.24
-    CPU time for cycle= 2      0.23 sec, wall time      0.01 sec
+    CPU time for cycle= 2      0.20 sec, wall time      0.01 sec
 HOMO (A1) = -0.289026615523957  LUMO (A1) = 0.0786166029596661
 irrep_nelec = [4, 0, 0]
 A1 nocc = 2  HOMO = -0.289026615523957  LUMO = 0.0786166029596661
@@ -151,7 +165,7 @@ B2 nocc = 0
    mo_energy = [ 0.16324727]
 E_coul = 3.58388375260669
 cycle= 3 E= -7.86170222121485  delta_E= -0.000705  |g|= 0.00779  |ddm|= 0.067
-    CPU time for cycle= 3      0.18 sec, wall time      0.00 sec
+    CPU time for cycle= 3      0.19 sec, wall time      0.01 sec
 HOMO (A1) = -0.285157540367757  LUMO (A1) = 0.0782994102293019
 irrep_nelec = [4, 0, 0]
 A1 nocc = 2  HOMO = -0.285157540367757  LUMO = 0.0782994102293019
@@ -162,7 +176,7 @@ B2 nocc = 0
    mo_energy = [ 0.16390718]
 E_coul = 3.58588764507359
 cycle= 4 E= -7.8618646162001  delta_E= -0.000162  |g|= 0.000339  |ddm|= 0.0501
-    CPU time for cycle= 4      0.32 sec, wall time      0.01 sec
+    CPU time for cycle= 4      0.24 sec, wall time      0.01 sec
 HOMO (A1) = -0.285275680275745  LUMO (A1) = 0.078204550853401
 irrep_nelec = [4, 0, 0]
 A1 nocc = 2  HOMO = -0.285275680275745  LUMO = 0.078204550853401
@@ -173,7 +187,7 @@ B2 nocc = 0
    mo_energy = [ 0.16394396]
 E_coul = 3.58601985362931
 cycle= 5 E= -7.8618647672006  delta_E= -1.51e-07  |g|= 4.21e-05  |ddm|= 0.00165
-    CPU time for cycle= 5      0.35 sec, wall time      0.01 sec
+    CPU time for cycle= 5      0.34 sec, wall time      0.01 sec
 HOMO (A1) = -0.285271106177794  LUMO (A1) = 0.0782159694343396
 irrep_nelec = [4, 0, 0]
 A1 nocc = 2  HOMO = -0.285271106177794  LUMO = 0.0782159694343396
@@ -184,7 +198,7 @@ B2 nocc = 0
    mo_energy = [ 0.16394145]
 E_coul = 3.58600723469775
 cycle= 6 E= -7.86186476954373  delta_E= -2.34e-09  |g|= 1.61e-06  |ddm|= 0.000172
-    CPU time for cycle= 6      0.36 sec, wall time      0.01 sec
+    CPU time for cycle= 6      0.34 sec, wall time      0.01 sec
 HOMO (A1) = -0.285270735722829  LUMO (A1) = 0.0782165834851534
 irrep_nelec = [4, 0, 0]
 A1 nocc = 2  HOMO = -0.285270735722829  LUMO = 0.0782165834851534
@@ -195,7 +209,7 @@ B2 nocc = 0
    mo_energy = [ 0.16394134]
 E_coul = 3.58600663907449
 cycle= 7 E= -7.86186476954976  delta_E= -6.03e-12  |g|= 7.55e-08  |ddm|= 1.01e-05
-    CPU time for cycle= 7      0.34 sec, wall time      0.01 sec
+    CPU time for cycle= 7      0.35 sec, wall time      0.01 sec
 HOMO (A1) = -0.285270765945003  LUMO (A1) = 0.0782165649169127
 irrep_nelec = [4, 0, 0]
 A1 nocc = 2  HOMO = -0.285270765945003  LUMO = 0.0782165649169127
@@ -206,8 +220,8 @@ B2 nocc = 0
    mo_energy = [ 0.16394135]
 E_coul = 3.58600665597797
 Extra cycle  E= -7.86186476954977  delta_E= -1.07e-14  |g|= 2.13e-08  |ddm|= 2.16e-07
-    CPU time for scf_cycle      3.16 sec, wall time      0.10 sec
-    CPU time for SCF      3.16 sec, wall time      0.10 sec
+    CPU time for scf_cycle      2.97 sec, wall time      0.10 sec
+    CPU time for SCF      2.98 sec, wall time      0.10 sec
 converged SCF energy = -7.86186476954977
 MO conversion successful
 **** RUNNING CCSD ****
@@ -297,80 +311,40 @@ Total energy is : -7.88231382171
 **** CCSD is done ****
 Response amplitudes are initiated
 ---------------------------------------------------------
-               Molecular point group   0
-    Linear Response iteration begins for symmetry   0
+               Molecular point group   1
+    Linear Response iteration begins for symmetry   1
 ---------------------------------------------------------
-
--------------------------------------------------
-          Iteration number 0
-          Subspace vector 0
--------------------------------------------------
              ------------------------
-EPS for IROOT : 1   IS:  0.0559040352472
-Eigenvalue for IROOT : 1   IS:   0.190260980919  a.u.  5.17726459299  eV
+>>> iter: 1  root: 1 0.0559040352472
+E>> iter: 1  root: 1 0.190260980919  a.u.  5.17726459299  eV
              ------------------------
-
--------------------------------------------------
-          Iteration number 1
-          Subspace vector 1
--------------------------------------------------
              ------------------------
-EPS for IROOT : 1   IS:  0.0229608892831
-Eigenvalue for IROOT : 1   IS:   0.137445658871  a.u.  3.74008658894  eV
+>>> iter: 2  root: 1 0.0229608892831
+E>> iter: 2  root: 1 0.137445658871  a.u.  3.74008658894  eV
              ------------------------
-
--------------------------------------------------
-          Iteration number 2
-          Subspace vector 2
--------------------------------------------------
              ------------------------
-EPS for IROOT : 1   IS:  0.00651537113195
-Eigenvalue for IROOT : 1   IS:   0.132819938172  a.u.  3.61421432717  eV
+>>> iter: 3  root: 1 0.00651537113195
+E>> iter: 3  root: 1 0.132819938172  a.u.  3.61421432717  eV
              ------------------------
-
--------------------------------------------------
-          Iteration number 3
-          Subspace vector 3
--------------------------------------------------
              ------------------------
-EPS for IROOT : 1   IS:  0.00209492332366
-Eigenvalue for IROOT : 1   IS:   0.132743126474  a.u.  3.61212417456  eV
+>>> iter: 4  root: 1 0.00209492332366
+E>> iter: 4  root: 1 0.132743126474  a.u.  3.61212417456  eV
              ------------------------
-
--------------------------------------------------
-          Iteration number 4
-          Subspace vector 4
--------------------------------------------------
              ------------------------
-EPS for IROOT : 1   IS:  0.000273059404344
-Eigenvalue for IROOT : 1   IS:   0.13279159902  a.u.  3.61344317963  eV
+>>> iter: 5  root: 1 0.000273059404344
+E>> iter: 5  root: 1 0.13279159902  a.u.  3.61344317963  eV
              ------------------------
-
--------------------------------------------------
-          Iteration number 5
-          Subspace vector 5
--------------------------------------------------
              ------------------------
-EPS for IROOT : 1   IS:  4.87580406308e-05
-Eigenvalue for IROOT : 1   IS:   0.132793883272  a.u.  3.61350533729  eV
+>>> iter: 6  root: 1 4.87580406308e-05
+E>> iter: 6  root: 1 0.132793883272  a.u.  3.61350533729  eV
              ------------------------
-
--------------------------------------------------
-          Iteration number 6
-          Subspace vector 6
--------------------------------------------------
              ------------------------
-EPS for IROOT : 1   IS:  1.3457767288e-05
-Eigenvalue for IROOT : 1   IS:   0.132792832134  a.u.  3.61347673437  eV
+>>> iter: 7  root: 1 1.3457767288e-05
+E>> iter: 7  root: 1 0.132792832134  a.u.  3.61347673437  eV
              ------------------------
-
--------------------------------------------------
-          Iteration number 7
-          Subspace vector 7
--------------------------------------------------
              ------------------------
-EPS for IROOT : 1   IS:  6.89219545869e-07
-Eigenvalue for IROOT : 1   IS:   0.132792485264  a.u.  3.61346729556  eV
+>>> iter: 8  root: 1 6.89219545869e-07
+E>> iter: 8  root: 1 0.132792485264  a.u.  3.61346729556  eV
              ------------------------
 !!!!!!!!!!CONVERGED!!!!!!!!!!!!
 Excitation Energy for sym 0 iroot 1  : 0.132792485264  a.u.  3.61346729556  eV

@@ -40,21 +40,23 @@ mf = scf.RHF(mol).run()
 #mp2_res.run()
 
 cc_res = CC.state(mf)
-cc_res.variant = 'CCSD'
+cc_res.variant = 'ICCSD'
+
+# This is also the default values for no_act and nv_act
 if (cc_res.variant == 'ICCSD'):
     cc_res.no_act = 1
     cc_res.nv_act = 1
 
-cc_res.maxsub = 7
-#cc_res.conv = 1e-7
-cc_res.maxiter = 50
+cc_res.maxsub = 30
+cc_res.maxiter = 30
+cc_res.conv = 1e-7
 
 cc_res.energy.run()
 
 cc_res.maxiter = 30
 cc_res.conv = 1e-6
-cc_res.maxsub=40
+cc_res.maxsub=6
 
 cc_res.exc_en.root_info = [1,0,0,0]
+#cc_res.exc_en.tUseOtherRoots=True
 cc_res.exc_en.run()
-
