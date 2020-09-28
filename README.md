@@ -1,6 +1,6 @@
 # iccsdn_modules
 
-## Steps to pull the code from GitHub
+## Steps to get the code from GitHub
 1. Check if there exists the file ~/.ssh/id_rsa.pub . This file contains the public ssh-key which identifies your computer into the GitHub system. If the file does not exist, create it following the further steps:
 
    a) 'ssh-keygen -t rsa'
