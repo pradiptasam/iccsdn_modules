@@ -13,9 +13,6 @@ class intermediates(object):
 	self.nv_act = data.nv_act
 	self.n_act = self.no_act + self.nv_act
 
-	self.data = data
-
-
     def initialize(self):
 	occ = self.nocc
 	nao = self.nao
@@ -245,12 +242,10 @@ class amplitude(object):
 	self.nocc = data.nocc
 	self.nvirt = data.nvirt
 	self.no_act = data.no_act
-
-	self.data = data
 	self.nv_act = data.nv_act
-	self.n_act = self.no_act + self.nv_act
 
 	self.data = data
+	self.n_act = self.no_act + self.nv_act
 
     def singles(self,I1,I2,I_oo,I_vv):
 
@@ -540,12 +535,10 @@ class intermediates_response(object):
 	self.nocc = data.nocc
 	self.nvirt = data.nvirt
 	self.no_act = data.no_act
-
-	self.data = data
 	self.nv_act = data.nv_act
-	self.n_act = self.no_act + self.nv_act
 
 	self.data = data
+	self.n_act = self.no_act + self.nv_act
 
 	self.r = r
 	self.iroot = iroot
@@ -665,6 +658,137 @@ class intermediates_response(object):
 	I_vv = None
 	I_oovo = None
 	I_vovv = None
+
+    def W1_int_So(self, order):
+
+        occ = self.nocc
+        nao = self.nao
+        o_act = self.no_act
+       
+	if (order == 0):
+	    So = self.data.So
+	elif(order == 1):
+	    So = self.data.dict_r_So[self.r, self.iroot]
+
+        II_oo = np.zeros((occ,occ)) 
+        II_oo[:,occ-o_act:occ] += -2*0.25*np.einsum('ciml,mlcv->iv',self.data.twoelecint_mo[occ:nao,:occ,:occ,:occ],So) 
+        II_oo[:,occ-o_act:occ] += 0.25*np.einsum('diml,lmdv->iv',self.data.twoelecint_mo[occ:nao,:occ,:occ,:occ],So)
+       
+        return II_oo
+        gc.collect()
+    
+    def W1_int_Sv(self, order):
+
+        occ = self.nocc
+        nao = self.nao
+        virt = self.nvirt
+        v_act = self.nv_act
+       
+	if (order == 0):
+	    Sv = self.data.Sv
+	elif(order == 1):
+	    Sv = self.data.dict_r_Sv[self.r, self.iroot]
+
+        II_vv = np.zeros((virt,virt))
+        II_vv[:v_act,:] += 2*0.25*np.einsum('dema,mude->ua',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ:nao],Sv) 
+        II_vv[:v_act,:] += - 0.25*np.einsum('dema,mued->ua',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ:nao],Sv)
+        return II_vv
+        gc.collect()
+
+    def coupling_terms_Sv(self, order):
+
+        occ = self.nocc
+        nao = self.nao
+        virt = self.nvirt
+        o_act = self.no_act
+        v_act = self.nv_act
+       
+	if (order == 0):
+	    Sv = self.data.Sv
+	elif(order == 1):
+	    Sv = self.data.dict_r_Sv[self.r, self.iroot]
+
+        II_vo = np.zeros((virt,o_act))
+        II_vo[:v_act,:] += 2*0.25*np.einsum('cblv,lwcb->wv',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ-o_act:occ],Sv) 
+        II_vo[:v_act,:] += - 0.25*np.einsum('bclv,lwcb->wv',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ-o_act:occ],Sv)
+      
+        return II_vo
+        gc.collect()
+    
+    def coupling_terms_So(self, order):
+
+        occ = self.nocc
+        nao = self.nao
+        virt = self.nvirt
+        o_act = self.no_act
+        v_act = self.nv_act
+       
+	if (order == 0):
+	    So = self.data.So
+	elif(order == 1):
+	    So = self.data.dict_r_So[self.r, self.iroot]
+
+        II_ov = np.zeros((v_act,occ)) 
+        II_ov[:,occ-o_act:occ] += -2*0.25*np.einsum('dulk,lkdx->ux',self.data.twoelecint_mo[occ:nao,occ:occ+v_act,:occ,:occ],So)
+        II_ov[:,occ-o_act:occ] +=  0.25*np.einsum('dulk,kldx->ux',self.data.twoelecint_mo[occ:nao,occ:occ+v_act,:occ,:occ],So) 
+        
+        return II_ov
+        gc.collect()
+
+    ##Two body Intermediates for (V_S_T)_c terms contributing to R_iuab and R_ijav##
+    def W2_int_So(self, order):
+
+        occ = self.nocc
+        nao = self.nao
+        virt = self.nvirt
+        o_act = self.no_act
+        v_act = self.nv_act
+       
+	if (order == 0):
+	    So = self.data.So
+	elif(order == 1):
+	    So = self.data.dict_r_So[self.r, self.iroot]
+
+        II_ovoo = np.zeros((occ,virt,o_act,occ))
+        II_ovoo3 = np.zeros((occ,v_act,occ,occ))
+        II_vvvo3 = np.zeros((virt,v_act,virt,occ))
+     
+        II_ovoo[:,:,:,occ-o_act:occ] += -np.einsum('cdvk,jkcw->jdvw',self.data.twoelecint_mo[occ:nao,occ:nao,occ-o_act:occ,:occ],So)
+     
+        ##Intermediates for off diagonal terms like So->R_iuab##
+     
+        II_ovoo3[:,:,:,occ-o_act:occ] += -np.einsum('dulk,ikdw->iulw',self.data.twoelecint_mo[occ:nao,occ:occ+v_act,:occ,:occ],So)
+        II_vvvo3[:,:,:,occ-o_act:occ] += -np.einsum('dulk,lkaw->duaw',self.data.twoelecint_mo[occ:nao,occ:occ+v_act,:occ,:occ],So)
+      
+        return II_ovoo,II_ovoo3,II_vvvo3
+        gc.collect()
+    
+    
+    def W2_int_Sv(self, order):
+
+        occ = self.nocc
+        nao = self.nao
+        virt = self.nvirt
+        o_act = self.no_act
+        v_act = self.nv_act
+
+	if (order == 0):
+	    Sv = self.data.Sv
+	elif(order == 1):
+	    Sv = self.data.dict_r_Sv[self.r, self.iroot]
+
+        II_vvvo = np.zeros((v_act,virt,virt,occ))
+        II_vvvo2 = np.zeros((virt,virt,virt,o_act))
+        II_ovoo2 = np.zeros((occ,virt,occ,o_act))
+      
+        II_vvvo[:,:v_act,:,:] += -np.einsum('uckl,kxbc->uxbl', self.data.twoelecint_mo[occ:occ+v_act,occ:nao,:occ,:occ],Sv) 
+        ##Intermediates for off diagonal terms like Sv->R_ijav##
+        II_vvvo2[:,:v_act,:,:] += -np.einsum('dckv,kxac->dxav', self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ-o_act:occ],Sv)
+        II_ovoo2[:,:v_act,:,:] += np.einsum('dckv,ixdc->ixkv', self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ-o_act:occ],Sv)
+     
+        return II_vvvo,II_vvvo2,II_ovoo2
+        gc.collect()
+
 class amplitude_response(object):
     def __init__(self, data, r, iroot):
 
@@ -672,12 +796,10 @@ class amplitude_response(object):
 	self.nocc = data.nocc
 	self.nvirt = data.nvirt
 	self.no_act = data.no_act
-
-	self.data = data
 	self.nv_act = data.nv_act
-	self.n_act = self.no_act + self.nv_act
 
 	self.data = data
+	self.n_act = self.no_act + self.nv_act
 
 	self.r = r
 	self.iroot = iroot
@@ -853,3 +975,246 @@ class amplitude_response(object):
 
 	R_ijab = None
 
+    def inserted_diag_So_t1(self, II_oo, order):
+
+	if (order == 0):
+	    t1 = self.data.t1
+	elif(order == 1):
+	    t1 = self.data.dict_r_t1[self.r, self.iroot]
+
+        R_ia = -np.einsum('ik,ka->ia',II_oo, t1)
+        return R_ia 
+     
+        R_ia = None
+        II_oo = None
+        gc.collect() 
+    
+    def inserted_diag_Sv_t1(self, II_vv, order):
+
+	if (order == 0):
+	    t1 = self.data.t1
+	elif(order == 1):
+	    t1 = self.data.dict_r_t1[self.r, self.iroot]
+
+        R_ia = np.einsum('ca,ic->ia',II_vv, t1)
+        return R_ia
+     
+        R_ia = None
+        II_vv = None
+        gc.collect() 
+
+    def inserted_diag_So(self, II_oo, order):
+
+	if (order == 0):
+	    t2 = self.data.t2
+	elif(order == 1):
+	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+
+        R_ijab = -np.einsum('ik,kjab->ijab',II_oo,t2)   
+        return R_ijab 
+     
+        R_ijab = None
+        II_oo = None
+        gc.collect() 
+    
+    def inserted_diag_Sv(self, II_vv, order):
+
+	if (order == 0):
+	    t2 = self.data.t2
+	elif(order == 1):
+	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+
+        R_ijab = np.einsum('ca,ijcb->ijab',II_vv,t2)  
+        return R_ijab
+     
+        R_ijab = None
+        II_vv = None
+        gc.collect() 
+
+    def Sv_diagram_vs_contraction(self):
+
+        occ = self.nocc
+        nao = self.nao
+        virt = self.nvirt
+        o_act = self.no_act
+        v_act = self.nv_act
+
+	Sv = self.data.dict_r_Sv[self.r, self.iroot]
+
+        #R_iuab = cp.deepcopy(self.data.twoelecint_mo[:occ,occ:occ+v_act,occ:nao,occ:nao])
+        R_iuab  = -np.einsum('ik,kuab->iuab',self.data.fock_mo[:occ,:occ],Sv)
+        R_iuab += np.einsum('da,iudb->iuab',self.data.fock_mo[occ:nao,occ:nao],Sv)
+        R_iuab += np.einsum('db,iuad->iuab',self.data.fock_mo[occ:nao,occ:nao],Sv)
+        R_iuab += np.einsum('edab,iued->iuab',self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,occ:nao],Sv)
+        R_iuab += 2*np.einsum('idak,kudb->iuab',self.data.twoelecint_mo[:occ,occ:nao,occ:nao,:occ],Sv)
+        R_iuab += -np.einsum('idka,kudb->iuab',self.data.twoelecint_mo[:occ,occ:nao,:occ,occ:nao],Sv)
+        R_iuab += -np.einsum('dika,kubd->iuab',self.data.twoelecint_mo[occ:nao,:occ,:occ,occ:nao],Sv)
+        R_iuab += -np.einsum('idkb,kuad->iuab',self.data.twoelecint_mo[:occ,occ:nao,:occ,occ:nao],Sv)
+        return R_iuab
+        
+        R_iuab = None
+        gc.collect()
+    
+    def Sv_diagram_vt_contraction(self):
+
+        occ = self.nocc
+        nao = self.nao
+        o_act = self.no_act
+        v_act = self.nv_act
+
+	t2 = self.data.dict_r_t2[self.r, self.iroot]
+
+        R_iuab = 2*np.einsum('dukb,kida->iuab',self.data.twoelecint_mo[occ:nao,occ:occ+v_act,:occ,occ:nao],t2)
+        R_iuab += -np.einsum('udkb,kida->iuab',self.data.twoelecint_mo[occ:occ+v_act,occ:nao,:occ,occ:nao],t2)
+        R_iuab += -np.einsum('dukb,kiad->iuab',self.data.twoelecint_mo[occ:nao,occ:occ+v_act,:occ,occ:nao],t2)
+        R_iuab += np.einsum('uikl,klba->iuab', self.data.twoelecint_mo[occ:occ+v_act,:occ,:occ,:occ],t2)
+        R_iuab += -np.einsum('udka,kibd->iuab',self.data.twoelecint_mo[occ:occ+v_act,occ:nao,:occ,occ:nao],t2)
+        return R_iuab
+        
+        R_iuab = None
+        gc.collect() 
+     
+    def So_diagram_vs_contraction(self):
+
+        occ = self.nocc
+        nao = self.nao
+        o_act = self.no_act
+        v_act = self.nv_act
+
+	So = self.data.dict_r_So[self.r, self.iroot]
+
+        #R_ijav = cp.deepcopy(self.data.twoelecint_mo[:occ,:occ,occ:nao,occ-o_act:occ])
+        R_ijav = np.einsum('da,ijdv->ijav', self.data.fock_mo[occ:nao,occ:nao],So)
+        R_ijav += -np.einsum('jl,ilav->ijav',self.data.fock_mo[:occ,:occ],So)
+        R_ijav += -np.einsum('il,ljav->ijav',self.data.fock_mo[:occ,:occ],So)
+        R_ijav += 2*np.einsum('dila,ljdv->ijav',self.data.twoelecint_mo[occ:nao,:occ,:occ,occ:nao],So)
+        R_ijav += -np.einsum('dila,jldv->ijav', self.data.twoelecint_mo[occ:nao,:occ,:occ,occ:nao],So)   
+        R_ijav += -np.einsum('dial,ljdv->ijav', self.data.twoelecint_mo[occ:nao,:occ,occ:nao,:occ],So)
+        R_ijav += np.einsum('ijlm,lmav->ijav',  self.data.twoelecint_mo[:occ,:occ,:occ,:occ],So)
+        R_ijav += -np.einsum('jdla,ildv->ijav', self.data.twoelecint_mo[:occ,occ:nao,:occ,occ:nao],So)
+        return R_ijav
+        
+        R_ijav = None
+        gc.collect()
+    
+    def So_diagram_vt_contraction(self):
+
+        occ = self.nocc
+        nao = self.nao
+        o_act = self.no_act
+        v_act = self.nv_act
+
+	t2 = self.data.dict_r_t2[self.r, self.iroot]
+
+        R_ijav = -np.einsum('djlv,liad->ijav',  self.data.twoelecint_mo[occ:nao,:occ,:occ,occ-o_act:occ],t2)
+        R_ijav += -np.einsum('djvl,lida->ijav', self.data.twoelecint_mo[occ:nao,:occ,occ-o_act:occ,:occ],t2)
+        R_ijav += np.einsum('cdva,jicd->ijav',  self.data.twoelecint_mo[occ:nao,occ:nao,occ-o_act:occ,occ:nao],t2)
+        R_ijav += -np.einsum('idlv,ljad->ijav', self.data.twoelecint_mo[:occ,occ:nao,:occ,occ-o_act:occ],t2)
+        R_ijav += 2*np.einsum('djlv,lida->ijav',self.data.twoelecint_mo[occ:nao,:occ,:occ,occ-o_act:occ],t2)
+        return R_ijav
+     
+        R_ijav = None
+        gc.collect()
+    
+    def T1_contribution_Sv(self):
+
+        occ = self.nocc
+        nao = self.nao
+        o_act = self.no_act
+        v_act = self.nv_act
+
+	t1 = self.data.dict_r_t1[self.r, self.iroot]
+
+        R_iuab = -np.einsum('uika,kb->iuab', self.data.twoelecint_mo[occ:occ+v_act,:occ,:occ,occ:nao],t1)
+        R_iuab += np.einsum('duab,id->iuab', self.data.twoelecint_mo[occ:nao,occ:occ+v_act,occ:nao,occ:nao],t1)
+        R_iuab += -np.einsum('iukb,ka->iuab',self.data.twoelecint_mo[:occ,occ:occ+v_act,:occ,occ:nao],t1)
+        return R_iuab
+     
+        R_iuab = None
+        gc.collect()
+    
+    def T1_contribution_So(self):
+
+        occ = self.nocc
+        nao = self.nao
+        o_act = self.no_act
+        v_act = self.nv_act
+
+	t1 = self.data.dict_r_t1[self.r, self.iroot]
+
+        R_ijav = np.einsum('diva,jd->ijav',  self.data.twoelecint_mo[occ:nao,:occ,occ-o_act:occ,occ:nao],t1)
+        R_ijav += np.einsum('djav,id->ijav', self.data.twoelecint_mo[occ:nao,:occ,occ:nao,occ-o_act:occ],t1)
+        R_ijav += -np.einsum('ijkv,ka->ijav',self.data.twoelecint_mo[:occ,:occ,:occ,occ-o_act:occ],t1)
+        return R_ijav
+     
+        R_ijav = None
+        gc.collect()
+
+    def v_so_t_contraction_diag(self, II_ov, order):
+
+	if (order == 0):
+	    t2 = self.data.t2
+	elif(order == 1):
+	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+
+        R_iuab = -np.einsum('ux,xiba->iuab',II_ov,t2)
+        return R_iuab
+     
+        R_iuab = None
+        II_ov = None
+        gc.collect()
+    
+    def v_sv_t_contraction_diag(self, II_vo, order):
+
+	if (order == 0):
+	    t2 = self.data.t2
+	elif(order == 1):
+	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+
+        R_ijav = np.einsum('wv,jiwa->ijav',II_vo,t2)
+        return R_ijav
+     
+        R_ijav = None
+        II_vo = None
+        gc.collect()
+
+    def W2_diag_So(self, II_ovoo,II_vvvo2,II_ovoo2, order):
+
+	if (order == 0):
+	    t2 = self.data.t2
+	elif(order == 1):
+	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+
+        R_ijav = 2.0*np.einsum('jdvw,wida->ijav',II_ovoo,t2)
+        R_ijav += -np.einsum('jdvw,wiad->ijav',II_ovoo,t2) #diagonal terms
+        R_ijav += np.einsum('dxav,ijdx->ijav',II_vvvo2,t2) #off-diagonal terms
+        R_ijav += -np.einsum('ixkv,kjax->ijav',II_ovoo2,t2)
+        R_ijav += -np.einsum('jxkv,kixa->ijav',II_ovoo2,t2)
+        return R_ijav
+     
+        R_ijav = None
+        II_ovoo = None
+        II_vvvo2 = None
+        II_ovoo2 = None
+        gc.collect()
+    
+    def W2_diag_Sv(self, II_vvvo,II_ovoo3,II_vvvo3, order):
+
+	if (order == 0):
+	    t2 = self.data.t2
+	elif(order == 1):
+	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+
+        R_iuab = 2.0*np.einsum('uxbl,ilax->iuab',II_vvvo,t2)
+        R_iuab += -np.einsum('uxbl,ilxa->iuab',II_vvvo,t2)
+        R_iuab += -np.einsum('iulw,lwab->iuab',II_ovoo3,t2)
+        R_iuab += -np.einsum('duaw,iwdb->iuab',II_vvvo3,t2) 
+        R_iuab += -np.einsum('dubw,iwad->iuab',II_vvvo3,t2) 
+        return R_iuab
+     
+        R_iuab = None
+        II_vvvo = None
+        II_ovoo3 = None
+        II_vvvo3 = None
+        gc.collect()
+    
