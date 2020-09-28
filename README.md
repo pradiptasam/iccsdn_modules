@@ -30,6 +30,7 @@ II) The other would be by adding the directory 'iccsdn_modules' into the pyscf p
   You can choose either of these two ways to run the script. But depending on which one you choose, the command to import the CC and MP2 modules would differ. To make this import process automatic, you can add the following lines at the top of the 'calc.py' script.
   
   '''
+  
 import os 
 
 _pythonpath = os.environ['PYTHONPATH']
@@ -37,11 +38,17 @@ _pythonpath = os.environ['PYTHONPATH']
 _present_in_pythonpath =  _pythonpath.find('iccsdn_module') >= 0
 
 if (_present_in_pythonpath):
+
   import CC
+  
   import MP2
+  
 else:
+
   from pyscf.iccsdn import CC
+  
   from pyscf.iccsdn import MP2
+  
 '''
 
 You can also find these above mentioned command liness inside the scripts 'test/ccsd_excit.py' and 'test/iccsd_excit.py'. These two scripts along with their respective output files are there for debugging any future change in the module files.   
