@@ -333,6 +333,7 @@ class state():
       self.cc_main = cc_main
       self.root_info = [1]
       self.tUseOtherRoots = False
+      self.amp_thrs = 1e-01
 
       self.maxsub = 0
       self.maxiter = 0
@@ -800,9 +801,10 @@ class state():
         print ("             ------------------------")
 
       if (sum(self.count)== nroot):
+        print "!!!!!!!!!!CONVERGED!!!!!!!!!!!!"
         for iroot in range(0,nroot):
-          print "!!!!!!!!!!CONVERGED!!!!!!!!!!!!"
           print 'Excitation Energy for sym', self.isym, 'iroot', iroot+1, ' :', self.w[iroot], ' a.u. ', self.w[iroot]*27.2113839, ' eV'
+          self.print_vectors(iroot, cc) 
         tConverged = True
       else:
         tConverged = False
@@ -1052,6 +1054,45 @@ class state():
         print ("          Subspace vector "+str(self.r+1))
         print ("-------------------------------------------------")
   
+    def print_vectors(self, iroot, cc):
+
+      print 'Most Dominant configuration for this excited state:'
+      
+      nocc = cc.nocc
+      nvirt = cc.nvirt
+      no_act = cc.no_act
+      nv_act = cc.nv_act
+
+      if (cc.rank_t1 > 0):
+        for i in range(0,nocc):
+          for a in range(0,nvirt):
+	    if (abs(self.dict_x_t1[iroot][i,a]) > self.amp_thrs):
+              print i,"-->  ", a+nocc,"     ", self.dict_x_t1[iroot][i,a]
+
+      for i in range(0,nocc):
+        for j in range(0,nocc):
+          for a in range(0,nvirt):
+            for b in range(0,a+1):
+              if (abs(self.dict_x_t2[iroot][i,j,a,b]) > self.amp_thrs):
+                print i,"  ", j,"-->  ", a+nocc,"   ", b+nocc,"     ", self.dict_x_t2[iroot][i,j,a,b]
+        
+      if (cc.rank_Sv > 0):
+        for i in range(0,nocc):
+          for u in range(0,nv_act):
+            for a in range(0,nvirt):
+              for b in range(0,a+1):
+                if (abs(self.dict_x_Sv[iroot][i,u,a,b]) > self.amp_thrs):
+                  print i,"  ", u+nocc,"-->  ", a+nocc,"   ", b+nocc,"     ", self.dict_x_Sv[iroot][i,u,a,b]
+        
+      if (cc.rank_So > 0):
+        for i in range(0,nocc):
+          for j in range(0,nocc):
+            for a in range(0,nvirt):
+              for v in range(0,no_act):
+                if (abs(self.dict_x_So[iroot][i,j,a,v]) > self.amp_thrs):
+                  print i,"  ", j,"-->  ", a+nocc,"   ", v+nocc-no_act,"     ", self.dict_x_So[iroot][i,u,a,b]
+    
+        
 if __name__ == '__main__':
 
   mol = pyscf.gto.M(
