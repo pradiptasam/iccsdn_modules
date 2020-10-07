@@ -42,43 +42,51 @@ class state():
 
   def init_parameters(self):
   	
-    self.rank_So = 0
-    self.rank_Sv = 0
-    if (self.variant == 'LCCD'):
+    # The deafult value for rank_S is -1, it will be modified to 0 for running iCCSDn-PT,
+    # and to 1 for running iCCSDn
+    self.rank_So = -1
+    self.rank_Sv = -1
+
+    variant = self.variant.upper()
+    variant = variant.replace('-','')
+    if (variant == 'LCCD'):
       self.rank_t1 = 0
       self.rank_t2 = 1
       self.rank_t_max = 1 # This rank is defined as max(rank_t1,rank_t2)
-      print '**** RUNNING LCCD ****'
-    elif (self.variant == 'CCD'):
+    elif (variant == 'CCD'):
       self.rank_t1 = 0
       self.rank_t2 = 2
       self.rank_t_max = 2
-      print '**** RUNNING CCD ****'
-    if (self.variant == 'LCCSD'):
+    if (variant == 'LCCSD'):
       self.rank_t1 = 1
       self.rank_t2 = 1
       self.rank_t_max = 1
-      print '**** RUNNING LCCD ****'
-    elif (self.variant == 'CCSD'):
+    elif (variant == 'CCSD'):
       self.rank_t1 = 4
       self.rank_t2 = 2
       self.rank_t_max = 4
-      print '**** RUNNING CCSD ****'
-    elif (self.variant == 'ICCSD'):
+    elif ('ICCSD' in variant):
       self.rank_t1 = 4
       self.rank_t2 = 2
-      self.rank_So = 1
-      self.rank_Sv = 1
       self.rank_t_max = 4
       self.no_act = 1
       self.nv_act = 1
-    
-      print '**** RUNNING ICCSD ****'
+      if ('PT' in variant):
+        self.rank_So = 0
+        self.rank_Sv = 0
+      else:
+        self.rank_So = 1
+        self.rank_Sv = 1
   
+    print '**** RUNNING ', variant,  ' ****'
+
     self.tInitParams = False
     self.e_old = self.e_hf
 
   def initialize(self):
+
+    if self.tInitParams:
+      self.init_parameters()
 
     self.AllData = GetIntNData(self.mf, self.nfo, self.nfv)
 
@@ -92,9 +100,6 @@ class state():
 
     self.AllData.no_act = self.no_act
     self.AllData.nv_act = self.nv_act
-
-    if self.tInitParams:
-      self.init_parameters()
 
     self.AllData.get_orb_sym()
 
@@ -110,10 +115,10 @@ class state():
       if (cc.rank_t1 > 0):
         data.init_guess_t1()
  
-      if (cc.rank_So > 0):
+      if (cc.rank_So >= 0):
         data.init_guess_So()
  
-      if (cc.rank_Sv > 0):
+      if (cc.rank_Sv >= 0):
         data.init_guess_Sv()
  
       data.get_tau(cc.rank_t1)
@@ -216,9 +221,10 @@ class state():
       if (cc.rank_t1 > 0):
         I1, I2 = intermediates.R_ia_intermediates()
  
-      if (cc.rank_So > 0):
+      if (cc.rank_So >= 0):
         II_oo = intermediates.W1_int_So()
         II_vv = intermediates.W1_int_Sv()
+      if (cc.rank_So > 0):
         II_ov = intermediates.coupling_terms_So()
         II_vo = intermediates.coupling_terms_Sv()
  
@@ -235,9 +241,10 @@ class state():
         self.R_ijab += amplitude.singles_n_doubles(I_oovo,I_vovv, cc.rank_t1)
         self.R_ijab += amplitude.higher_order(Iovov_3, Iovvo_3, Iooov, I3, Ioooo_2, I_voov, cc.rank_t1)
  
-      if (cc.rank_So > 0):
+      if (cc.rank_So >= 0):
         self.R_ijab += amplitude.inserted_diag_So(II_oo) 
  
+      if (cc.rank_So > 0):
         self.R_ijav = amplitude.So_diagram_vs_contraction()
         self.R_ijav += amplitude.So_diagram_vt_contraction()
         self.R_ijav += amplitude.v_sv_t_contraction_diag(II_vo)
@@ -246,9 +253,10 @@ class state():
           self.R_ijav += amplitude.T1_contribution_So()
           #self.R_ia += amplitude.inserted_diag_So_t1(II_oo)
  
-      if (cc.rank_Sv > 0):
+      if (cc.rank_Sv >= 0):
         self.R_ijab += amplitude.inserted_diag_Sv(II_vv) 
  
+      if (cc.rank_Sv > 0):
         self.R_iuab = amplitude.Sv_diagram_vs_contraction()
         self.R_iuab += amplitude.Sv_diagram_vt_contraction()
         self.R_iuab += amplitude.v_so_t_contraction_diag(II_ov)
@@ -313,7 +321,7 @@ class state():
           data.diis_errors.append((errors_t2))
  
     def run(self):
- 
+
       self.cc_main.initialize()
  
       self.init_amplitudes(self.cc_main, self.cc_main.AllData)

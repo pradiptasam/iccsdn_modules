@@ -32,24 +32,28 @@ mf = scf.RHF(mol).run()
 
 # cc_res is linked to the class CC.state
 cc_res = CC.state(mf)
+
 # The default of CC.state.variant is CCSD, so one can run CCSD without adding the line mentioning the variant.
 # An alternative way to do 'ICCSD' is: 'cc_res = CC.state(mf, variant='ICCSD')
-cc_res.variant = 'ICCSD'
+# The name of the method can be both in upper and lower cases, and it can also contain '-'. So, to do iCCSDn-PT, all of these - 'iccsd-pt', 'iCCSDn-PT', 'ICCSDPT' - are acceptable.
+cc_res.variant = 'CCSD'
 
 # These are also the default values for no_act and nv_act. Soi, there is no need to have these lines unless you 
 #are using different values for no_act and nv_act
-if (cc_res.variant == 'ICCSD'):
-    cc_res.no_act = 1
-    cc_res.nv_act = 1
+#if (cc_res.variant == 'ICCSD'):
+#    cc_res.no_act = 1
+#    cc_res.nv_act = 1
 
 # maxsub represents the maximum dimension of the subspace being used for the DIIS method. The same parameter is
 # also used as the maximum dimension of the subspace while using the Davidson method in the excitation energy calculation.
 # The default value for maxsub is 20
 cc_res.maxsub = 30
+
 # Maximum number of iterations to be used to solve the amplitude equation. Again, same parameter is used in the similar 
 #context while calculating excitation energy.
 # The default value for maxiter is 50
 cc_res.maxiter = 30
+
 # Convergence threshold used to solve the amplitude. Ditto for excitation energy calculation.
 # The default value for conv is 1e-7
 cc_res.conv = 1e-7
@@ -67,6 +71,7 @@ cc_res.maxsub=6
 # The most important input parameter here is 'root_info', which is used in order to mention the number of excited states for each symmetry 
 # to be calculated. The default is [1]
 cc_res.exc_en.root_info = [1,0,0,0]
+
 # The following parameter is liitle bit insignificant at this point. The default used for this is False.
 #cc_res.exc_en.tUseOtherRoots=True
 
