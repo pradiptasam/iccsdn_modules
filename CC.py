@@ -347,6 +347,11 @@ class state():
       self.maxiter = 0
       self.conv = 0
 
+      self.norm_fact_t1 = [2.0]
+      self.norm_fact_t2 = [2.0, -1.0]
+      self.norm_fact_So = [2.0, -1.0]
+      self.norm_fact_Sv = [2.0, -1.0]
+
     def check_any_change(self, cc):
  
       if (self.maxsub != 0):
@@ -422,9 +427,9 @@ class state():
         data.dict_Y_ijab[self.r, self.iroot] += amplitude.inserted_diag_So(II_oo, order=1)
         data.dict_Y_ijab[self.r, self.iroot] += amplitude.inserted_diag_So(II_oo_R, order=0)
         # S_o contributing to t1
-        if (cc.rank_t1 > 0):
-          data.dict_Y_ia[self.r, self.iroot] += amplitude.inserted_diag_So_t1(II_oo, order=1)
-          data.dict_Y_ia[self.r, self.iroot] += amplitude.inserted_diag_So_t1(II_oo_R, order=0)
+       #if (cc.rank_t1 > 0):
+       #  data.dict_Y_ia[self.r, self.iroot] += amplitude.inserted_diag_So_t1(II_oo, order=1)
+       #  data.dict_Y_ia[self.r, self.iroot] += amplitude.inserted_diag_So_t1(II_oo_R, order=0)
 
         # S_o and T2 contributing to S_o
         data.dict_Y_ijav[self.r, self.iroot] = amplitude.So_diagram_vs_contraction()
@@ -451,9 +456,9 @@ class state():
         data.dict_Y_ijab[self.r, self.iroot] += amplitude.inserted_diag_Sv(II_vv_R, order=0)
 
         # S_v contributing to t1
-        if (cc.rank_t1 > 0):
-          data.dict_Y_ia[self.r, self.iroot] += amplitude.inserted_diag_Sv_t1(II_vv, order=1)
-          data.dict_Y_ia[self.r, self.iroot] += amplitude.inserted_diag_Sv_t1(II_vv_R, order=0)
+       #if (cc.rank_t1 > 0):
+       #  data.dict_Y_ia[self.r, self.iroot] += amplitude.inserted_diag_Sv_t1(II_vv, order=1)
+       #  data.dict_Y_ia[self.r, self.iroot] += amplitude.inserted_diag_Sv_t1(II_vv_R, order=0)
         
         # S_v and T2 contributing to S_v
         data.dict_Y_iuab[self.r, self.iroot] = amplitude.Sv_diagram_vs_contraction()
@@ -553,18 +558,18 @@ class state():
             loc1 = r*nroot+iroot
             loc2 = m*nroot+jroot
      	    if (cc.rank_t1 > 0): 
-              data.B_Y_ia[loc1,loc2] = 2.0*np.einsum('ia,ia',data.dict_r_t1[r,iroot],data.dict_Y_ia[m,jroot])
-              data.B_Y_ia[loc2,loc1] = 2.0*np.einsum('ia,ia',data.dict_r_t1[m,jroot],data.dict_Y_ia[r,iroot])
+              data.B_Y_ia[loc1,loc2] = self.norm_fact_t1[0]*np.einsum('ia,ia',data.dict_r_t1[r,iroot],data.dict_Y_ia[m,jroot])
+              data.B_Y_ia[loc2,loc1] = self.norm_fact_t1[0]*np.einsum('ia,ia',data.dict_r_t1[m,jroot],data.dict_Y_ia[r,iroot])
       
-            data.B_Y_ijab[loc1,loc2] = 2.0*np.einsum('ijab,ijab',data.dict_r_t2[r,iroot],data.dict_Y_ijab[m,jroot])-np.einsum('ijba,ijab',data.dict_r_t2[r,iroot],data.dict_Y_ijab[m,jroot])
-            data.B_Y_ijab[loc2,loc1] = 2.0*np.einsum('ijab,ijab',data.dict_r_t2[m,jroot],data.dict_Y_ijab[r,iroot])-np.einsum('ijba,ijab',data.dict_r_t2[m,jroot],data.dict_Y_ijab[r,iroot])
+            data.B_Y_ijab[loc1,loc2] = self.norm_fact_t2[0]*np.einsum('ijab,ijab',data.dict_r_t2[r,iroot],data.dict_Y_ijab[m,jroot])+ self.norm_fact_t2[1]*np.einsum('ijba,ijab',data.dict_r_t2[r,iroot],data.dict_Y_ijab[m,jroot])
+            data.B_Y_ijab[loc2,loc1] = self.norm_fact_t2[0]*np.einsum('ijab,ijab',data.dict_r_t2[m,jroot],data.dict_Y_ijab[r,iroot])+ self.norm_fact_t2[1]*np.einsum('ijba,ijab',data.dict_r_t2[m,jroot],data.dict_Y_ijab[r,iroot])
 
             if (cc.rank_So > 0):
-              data.B_Y_ijav[loc1,loc2] = 2.0*np.einsum('ijav,ijav',data.dict_r_So[r,iroot],data.dict_Y_ijav[m,jroot])-np.einsum('jiav,ijav',data.dict_r_So[r,iroot],data.dict_Y_ijav[m,jroot])
-              data.B_Y_ijav[loc2,loc1] = 2.0*np.einsum('ijav,ijav',data.dict_r_So[m,jroot],data.dict_Y_ijav[r,iroot])-np.einsum('jiav,ijav',data.dict_r_So[m,jroot],data.dict_Y_ijav[r,iroot])
+              data.B_Y_ijav[loc1,loc2] = self.norm_fact_So[0]*np.einsum('ijav,ijav',data.dict_r_So[r,iroot],data.dict_Y_ijav[m,jroot])+ self.norm_fact_So[1]*np.einsum('jiav,ijav',data.dict_r_So[r,iroot],data.dict_Y_ijav[m,jroot])
+              data.B_Y_ijav[loc2,loc1] = self.norm_fact_So[0]*np.einsum('ijav,ijav',data.dict_r_So[m,jroot],data.dict_Y_ijav[r,iroot])+ self.norm_fact_So[1]*np.einsum('jiav,ijav',data.dict_r_So[m,jroot],data.dict_Y_ijav[r,iroot])
             
-              data.B_Y_iuab[loc1,loc2] = 2.0*np.einsum('iuab,iuab',data.dict_r_Sv[r,iroot],data.dict_Y_iuab[m,jroot])-np.einsum('iuba,iuab',data.dict_r_Sv[r,iroot],data.dict_Y_iuab[m,jroot])
-              data.B_Y_iuab[loc2,loc1] = 2.0*np.einsum('iuab,iuab',data.dict_r_Sv[m,jroot],data.dict_Y_iuab[r,iroot])-np.einsum('iuba,iuab',data.dict_r_Sv[m,jroot],data.dict_Y_iuab[r,iroot])
+              data.B_Y_iuab[loc1,loc2] = self.norm_fact_Sv[0]*np.einsum('iuab,iuab',data.dict_r_Sv[r,iroot],data.dict_Y_iuab[m,jroot])+ self.norm_fact_Sv[1]*np.einsum('iuba,iuab',data.dict_r_Sv[r,iroot],data.dict_Y_iuab[m,jroot])
+              data.B_Y_iuab[loc2,loc1] = self.norm_fact_Sv[0]*np.einsum('iuab,iuab',data.dict_r_Sv[m,jroot],data.dict_Y_iuab[r,iroot])+ self.norm_fact_Sv[1]*np.einsum('iuba,iuab',data.dict_r_Sv[m,jroot],data.dict_Y_iuab[r,iroot])
 
       for iroot in range(0,nroot):
         for jroot in range(0,nroot):
@@ -572,13 +577,14 @@ class state():
           loc2 = r*nroot+jroot
   
           if (cc.rank_t1 > 0): 
-            data.B_Y_ia[loc1,loc2] = 2.0*np.einsum('ia,ia',data.dict_r_t1[r,iroot],data.dict_Y_ia[r,jroot])
+            data.B_Y_ia[loc1,loc2] = self.norm_fact_t1[0]*np.einsum('ia,ia',data.dict_r_t1[r,iroot],data.dict_Y_ia[r,jroot])
 
-          data.B_Y_ijab[loc1,loc2] = 2.0*np.einsum('ijab,ijab',data.dict_r_t2[r,iroot],data.dict_Y_ijab[r,jroot])-np.einsum('ijba,ijab',data.dict_r_t2[r,iroot],data.dict_Y_ijab[r,jroot])
+          data.B_Y_ijab[loc1,loc2] = self.norm_fact_t2[0]*np.einsum('ijab,ijab',data.dict_r_t2[r,iroot],data.dict_Y_ijab[r,jroot]) + self.norm_fact_t2[1]*np.einsum('ijba,ijab',data.dict_r_t2[r,iroot],data.dict_Y_ijab[r,jroot])
 
           if (cc.rank_So > 0):
-            data.B_Y_ijav[loc1,loc2] = 2.0*np.einsum('ijav,ijav',data.dict_r_So[r,iroot],data.dict_Y_ijav[r,jroot])-np.einsum('jiav,ijav',data.dict_r_So[r,iroot],data.dict_Y_ijav[r,jroot])
-            data.B_Y_iuab[loc1,loc2] = 2.0*np.einsum('iuab,iuab',data.dict_r_Sv[r,iroot],data.dict_Y_iuab[r,jroot])-np.einsum('iuba,iuab',data.dict_r_Sv[r,iroot],data.dict_Y_iuab[r,jroot])
+            data.B_Y_ijav[loc1,loc2] = self.norm_fact_So[0]*np.einsum('ijav,ijav',data.dict_r_So[r,iroot],data.dict_Y_ijav[r,jroot]) + self.norm_fact_So[1]*np.einsum('jiav,ijav',data.dict_r_So[r,iroot],data.dict_Y_ijav[r,jroot])
+            data.B_Y_iuab[loc1,loc2] = self.norm_fact_Sv[0]*np.einsum('iuab,iuab',data.dict_r_Sv[r,iroot],data.dict_Y_iuab[r,jroot]) + self.norm_fact_Sv[1]*np.einsum('iuba,iuab',data.dict_r_Sv[r,iroot],data.dict_Y_iuab[r,jroot])
+
 
   
        
@@ -651,20 +657,47 @@ class state():
 
     def find_norm(self, vec_t2, vec_t1=None, vec_So=None, vec_Sv=None):
 
-      norm = 2.0*np.einsum('ijab,ijab', vec_t2, vec_t2) - np.einsum('ijab,ijba', vec_t2, vec_t2)
+      norm = self.norm_fact_t2[0]*np.einsum('ijab,ijab', vec_t2, vec_t2) + self.norm_fact_t2[1]*np.einsum('ijab,ijba', vec_t2, vec_t2)
 
       try:
-        norm += 2.0*np.einsum('ia,ia', vec_t1, vec_t1)
+        norm += self.norm_fact_t1[0]*np.einsum('ia,ia', vec_t1, vec_t1)
       except: 
         norm += 0.0
 
       try:
-        norm += 2.0*np.einsum('ijav,ijav',vec_So,vec_So) - np.einsum('ijav,jiav',vec_So,vec_So)
-        norm += 2.0*np.einsum('iuab,iuab',vec_Sv,vec_Sv) - np.einsum('iuab,iuba',vec_Sv,vec_Sv)
+        norm += self.norm_fact_So[0]*np.einsum('ijav,ijav',vec_So,vec_So) + self.norm_fact_So[1]*np.einsum('ijav,jiav',vec_So,vec_So)
+
+        norm += self.norm_fact_Sv[0]*np.einsum('iuab,iuab',vec_Sv,vec_Sv) + self.norm_fact_Sv[1]*np.einsum('iuab,iuba',vec_Sv,vec_Sv)
       except:
         norm += 0.0
 
       return norm
+
+    def find_norm_sing_vec(self, vec_t2=None, vec_t1=None, vec_So=None, vec_Sv=None):
+
+      norm = 0.0
+      try: 
+        norm = self.norm_fact_t2[0]*np.einsum('ijab,ijab', vec_t2, vec_t2) + self.norm_fact_t2[1]*np.einsum('ijab,ijba', vec_t2, vec_t2)
+      except: 
+        norm +=0.0
+
+      try:
+        norm = self.norm_fact_t1[0]*np.einsum('ia,ia', vec_t1, vec_t1)
+      except: 
+        norm += 0.0
+
+      try:
+        norm = self.norm_fact_So[0]*np.einsum('ijav,ijav',vec_So,vec_So) + self.norm_fact_So[1]*np.einsum('ijav,jiav',vec_So,vec_So)
+      except:
+        norm += 0.0
+
+      try:
+        norm = self.norm_fact_Sv[0]*np.einsum('iuab,iuab',vec_Sv,vec_Sv) + self.norm_fact_Sv[1]*np.einsum('iuab,iuba',vec_Sv,vec_Sv)
+      except:
+        norm += 0.0
+
+      return norm
+
 
     def normalise_vector(self, vec_t2, vec_t1=None, vec_So=None, vec_Sv=None):
 
@@ -831,12 +864,16 @@ class state():
         self.dict_new_r_Sv = {}
 
       for iroot in range(0, nroot):
-        self.dict_new_r_t2[iroot] = np.divide(self.dict_R_ijab[iroot],(data.D2 - self.w[iroot]))
+        self.dict_new_r_t2[iroot] = np.divide(self.dict_R_ijab[iroot],data.D2)
+        #self.dict_new_r_t2[iroot] = np.divide(self.dict_R_ijab[iroot],(data.D2 - self.w[iroot]))
         if (cc.rank_t1 > 0):
-          self.dict_new_r_t1[iroot] = np.divide(self.dict_R_ia[iroot],(data.D1 - self.w[iroot]))
+          self.dict_new_r_t1[iroot] = np.divide(self.dict_R_ia[iroot],data.D1)
+          #self.dict_new_r_t1[iroot] = np.divide(self.dict_R_ia[iroot],(data.D1 - self.w[iroot]))
         if (cc.rank_So > 0):
-          self.dict_new_r_So[iroot] = np.divide(self.dict_R_ijav[iroot],(data.Do - self.w[iroot]))
-          self.dict_new_r_Sv[iroot] = np.divide(self.dict_R_iuab[iroot],(data.Dv - self.w[iroot]))
+          self.dict_new_r_So[iroot] = np.divide(self.dict_R_ijav[iroot],data.Do)
+          #self.dict_new_r_So[iroot] = np.divide(self.dict_R_ijav[iroot],(data.Do - self.w[iroot]))
+          self.dict_new_r_Sv[iroot] = np.divide(self.dict_R_iuab[iroot],data.Dv)
+          #self.dict_new_r_Sv[iroot] = np.divide(self.dict_R_iuab[iroot],(data.Dv - self.w[iroot]))
 
       self.dict_R_ia = None
       self.dict_R_ijab = None
@@ -864,12 +901,121 @@ class state():
       for iroot in range(0, nroot):
         for m in range(0,r+1):
           for jroot in range(0, nroot):
+
+            ovrlap = self.calc_overlap_sing_vec( t2_a=self.dict_new_r_t2[iroot], t2_b = data.dict_r_t2[m,jroot])
+            norm = self.find_norm_sing_vec(vec_t2=data.dict_r_t2[m, jroot])
+            if (cc.rank_t1 >  0):
+              ovrlap += self.calc_overlap_sing_vec(t1_a=self.dict_new_r_t1[iroot], t1_b = data.dict_r_t1[m,jroot])
+              norm += self.find_norm_sing_vec(vec_t1=data.dict_r_t1[m, jroot])
+            if (cc.rank_So > 0):
+              ovrlap += self.calc_overlap_sing_vec( So_a=self.dict_new_r_So[iroot], So_b = data.dict_r_So[m,jroot])
+              norm += self.find_norm_sing_vec(vec_So=data.dict_r_So[m, jroot])
+            if (cc.rank_Sv > 0):
+              ovrlap += self.calc_overlap_sing_vec( Sv_a=self.dict_new_r_Sv[iroot], Sv_b = data.dict_r_Sv[m,jroot])
+              norm += self.find_norm_sing_vec(vec_Sv=data.dict_r_Sv[m, jroot])
+            if (norm > 1e-12):
+              dict_orth_r_t2[iroot] += -ovrlap*data.dict_r_t2[m, jroot]/norm
+              if (cc.rank_t1 >  0):
+                dict_orth_r_t1[iroot] += -ovrlap*data.dict_r_t1[m, jroot]/norm
+              if (cc.rank_So > 0):
+                dict_orth_r_So[iroot] += -ovrlap*data.dict_r_So[m, jroot]/norm
+              if (cc.rank_Sv > 0):
+                dict_orth_r_Sv[iroot] += -ovrlap*data.dict_r_Sv[m, jroot]/norm
+
+            #ovrlap = self.calc_overlap_sing_vec( t2_a=dict_orth_r_t2[iroot], t2_b = data.dict_r_t2[m,jroot])
+            #ovrlap += self.calc_overlap_sing_vec( t1_a=dict_orth_r_t1[iroot], t1_b = data.dict_r_t1[m,jroot])
+            #ovrlap += self.calc_overlap_sing_vec( So_a=dict_orth_r_So[iroot], So_b = data.dict_r_So[m,jroot])
+            #ovrlap += self.calc_overlap_sing_vec( Sv_a=dict_orth_r_Sv[iroot], Sv_b = data.dict_r_Sv[m,jroot])
+
+        for jroot in range(0, iroot):
+
+            ovrlap = self.calc_overlap_sing_vec(t2_a=self.dict_new_r_t2[iroot], t2_b = dict_norm_r_t2[jroot])
+            norm = self.find_norm_sing_vec(vec_t2=dict_norm_r_t2[jroot])
+            if (cc.rank_t1 >  0):
+              ovrlap += self.calc_overlap_sing_vec(t1_a=self.dict_new_r_t1[iroot], t1_b = dict_norm_r_t1[jroot])
+              norm += self.find_norm_sing_vec(vec_t1=dict_norm_r_t1[jroot])
+            if (cc.rank_So > 0):
+              ovrlap += self.calc_overlap_sing_vec( So_a=self.dict_new_r_So[iroot], So_b = dict_norm_r_So[jroot])
+              norm += self.find_norm_sing_vec(vec_So=dict_norm_r_So[jroot])
+            if (cc.rank_Sv > 0):
+              ovrlap += self.calc_overlap_sing_vec( Sv_a=self.dict_new_r_Sv[iroot], Sv_b = dict_norm_r_Sv[jroot])
+              norm += self.find_norm_sing_vec(vec_Sv=dict_norm_r_Sv[jroot])
+            if (norm > 1e-12):
+              dict_orth_r_t2[iroot] += -ovrlap*dict_norm_r_t2[jroot]/norm
+              if (cc.rank_t1 >  0):
+                dict_orth_r_t1[iroot] += -ovrlap*dict_norm_r_t1[jroot]/norm
+              if (cc.rank_So > 0):
+                dict_orth_r_So[iroot] += -ovrlap*dict_norm_r_So[jroot]/norm
+              if (cc.rank_Sv > 0):
+                dict_orth_r_Sv[iroot] += -ovrlap*dict_norm_r_Sv[jroot]/norm
+
+        norm = 0.0
+        norm = self.find_norm_sing_vec(vec_t2=dict_orth_r_t2[iroot])
+
+        if (cc.rank_t1 >  0):
+          norm += self.find_norm_sing_vec(vec_t1=dict_orth_r_t1[iroot])
+        if (cc.rank_So >  0):
+          norm += self.find_norm_sing_vec(vec_So=dict_orth_r_So[iroot])
+        if (cc.rank_Sv >  0):
+          norm += self.find_norm_sing_vec(vec_Sv=dict_orth_r_Sv[iroot])
+        if (norm > 1e-12):
+          dict_norm_r_t2[iroot] = dict_orth_r_t2[iroot]/math.sqrt(norm)
+          if (cc.rank_t1 >  0):
+            dict_norm_r_t1[iroot] = dict_orth_r_t1[iroot]/math.sqrt(norm)
+          if (cc.rank_So >  0):
+            dict_norm_r_So[iroot] = dict_orth_r_So[iroot]/math.sqrt(norm)
+          if (cc.rank_Sv >  0):
+            dict_norm_r_Sv[iroot] = dict_orth_r_Sv[iroot]/math.sqrt(norm)
+        else: 
+          dict_norm_r_t2[iroot] = dict_orth_r_t2[iroot]
+          if (cc.rank_t1 >  0):
+            dict_norm_r_t1[iroot] = dict_orth_r_t1[iroot]
+          if (cc.rank_So >  0):
+            dict_norm_r_So[iroot] = dict_orth_r_So[iroot]
+          if (cc.rank_Sv >  0):
+            dict_norm_r_Sv[iroot] = dict_orth_r_Sv[iroot]
+
+        data.dict_r_t2[r+1,iroot] = dict_norm_r_t2[iroot]
+        if (cc.rank_t1 >  0):
+          data.dict_r_t1[r+1,iroot] = dict_norm_r_t1[iroot]
+        if (cc.rank_So > 0):
+          data.dict_r_So[r+1,iroot] = dict_norm_r_So[iroot]
+        if (cc.rank_Sv > 0):
+          data.dict_r_Sv[r+1,iroot] = dict_norm_r_Sv[iroot]
+
+       #print 'Final norm: ', self.find_norm(dict_norm_r_t2[iroot], dict_norm_r_t1[iroot], dict_norm_r_t2[iroot], dict_norm_r_t1[iroot])
+
+    def orthonormalize_amplitudes_alt(self, cc, data):
+
+      nroot = self.nroot
+      r = self.r
+
+      dict_orth_r_t2 = self.dict_new_r_t2
+      dict_norm_r_t2 = {}
+
+      if (cc.rank_t1 > 0):
+        dict_orth_r_t1 = self.dict_new_r_t1
+        dict_norm_r_t1 = {}
+
+      if (cc.rank_So > 0):
+        dict_orth_r_So = self.dict_new_r_So
+        dict_norm_r_So = {}
+        dict_orth_r_Sv = self.dict_new_r_Sv
+        dict_norm_r_Sv = {}
+
+      for iroot in range(0, nroot):
+        for m in range(0,r+1):
+          for jroot in range(0, nroot):
             if (cc.rank_t1 >  0):
 
               if (cc.rank_So > 0):
-                ovrlap = self.calc_overlap(self.dict_new_r_t2[iroot],data.dict_r_t2[m,jroot], self.dict_new_r_t1[iroot],data.dict_r_t1[m,jroot], self.dict_new_r_So[iroot],data.dict_r_So[m,jroot], self.dict_new_r_Sv[iroot],data.dict_r_Sv[m,jroot])
-                dict_orth_r_So[iroot] += -ovrlap*data.dict_r_So[m, jroot]
-                dict_orth_r_Sv[iroot] += -ovrlap*data.dict_r_Sv[m, jroot]
+                ovrlap = self.calc_overlap(self.dict_new_r_t2[iroot],data.dict_r_t2[m,jroot], self.dict_new_r_t1[iroot],data.dict_r_t1[m,jroot], self.dict_new_r_So[iroot],data.dict_r_So[m,jroot], self.dict_new_r_Sv[iroot], data.dict_r_Sv[m,jroot])
+                norm = self.find_norm(data.dict_r_t2[m,jroot], data.dict_r_t1[m,jroot], data.dict_r_So[m,jroot], data.dict_r_Sv[m,jroot])
+                if (norm > 1e-12):
+                  dict_orth_r_So[iroot] += -ovrlap*data.dict_r_So[m, jroot]/norm
+                #norm = self.find_norm_sing_vec(vec_Sv=data.dict_r_Sv[m, jroot])
+                if (norm > 1e-12):
+                  dict_orth_r_Sv[iroot] += -ovrlap*data.dict_r_Sv[m, jroot]/norm
               else:
                 ovrlap = self.calc_overlap(self.dict_new_r_t2[iroot],data.dict_r_t2[m,jroot], self.dict_new_r_t1[iroot],data.dict_r_t1[m,jroot])
 
@@ -889,14 +1035,14 @@ class state():
               if (cc.rank_So > 0):
                 ovrlap = self.calc_overlap(dict_norm_r_t2[jroot], self.dict_new_r_t2[iroot], dict_norm_r_t1[jroot], self.dict_new_r_t1[iroot], dict_norm_r_So[jroot], self.dict_new_r_So[iroot], dict_norm_r_Sv[jroot], self.dict_new_r_Sv[iroot])
                 dict_orth_r_So[iroot] += -ovrlap*dict_norm_r_So[jroot]
-                dict_orth_r_Sv[iroot] += -ovrlap*dict_norm_r_Sv[jroot]
-	      else: 
+                dict_orth_r_Sv[iroot] += -ovrlap*dict_norm_r_Sv[jroot] 
+              else: 
                 ovrlap = self.calc_overlap(dict_norm_r_t2[jroot], self.dict_new_r_t2[iroot], dict_norm_r_t1[jroot], self.dict_new_r_t1[iroot])
 
               dict_orth_r_t2[iroot] += -ovrlap*dict_norm_r_t2[jroot]
               dict_orth_r_t1[iroot] += -ovrlap*dict_norm_r_t1[jroot]
 
-    	    else: 
+            else: 
 
               ovrlap = self.calc_overlap(dict_orth_r_t2[jroot], self.dict_new_r_t2[iroot])
 
@@ -920,23 +1066,57 @@ class state():
 
        #print 'Final norm: ', self.find_norm(dict_norm_r_t2[iroot], dict_norm_r_t1[iroot], dict_norm_r_t2[iroot], dict_norm_r_t1[iroot])
 
+      self.dict_new_r_t1 = None
+      self.dict_new_r_t2 = None
+
     def calc_overlap(self, t2_a, t2_b, t1_a=None, t1_b=None, So_a=None, So_b=None, Sv_a=None, Sv_b=None):
 
-      overlap = 2.0*np.einsum('ijab,ijab',t2_a, t2_b) - np.einsum('ijab,ijba',t2_a, t2_b)
+      #overlap = 2.0*np.einsum('ijab,ijab',t2_a, t2_b) - np.einsum('ijab,ijba',t2_a, t2_b)
+      overlap = self.norm_fact_t2[0]*np.einsum('ijab,ijab',t2_a, t2_b) + self.norm_fact_t2[1]*np.einsum('ijab,ijba',t2_a, t2_b)
 
       try:
-        overlap += 2.0*np.einsum('ia,ia',t1_a, t1_b)
+        #overlap += 2.0*np.einsum('ia,ia',t1_a, t1_b)
+        overlap += self.norm_fact_t1[0]*np.einsum('ia,ia',t1_a, t1_b)
         try:
-          overlap += 2.0*np.einsum('ijav,ijav',So_a,So_b) - np.einsum('ijav,jiav',So_a,So_b)
-          overlap += 2.0*np.einsum('iuab,iuab',Sv_a,Sv_b) - np.einsum('iuab,iuba',Sv_a,Sv_b)
+          #overlap += 2.0*np.einsum('ijav,ijav',So_a,So_b) - np.einsum('ijav,jiav',So_a,So_b)
+          overlap += self.norm_fact_So[0]*np.einsum('ijav,ijav',So_a,So_b) + self.norm_fact_So[1]*np.einsum('ijav,jiav',So_a,So_b)
+
+          #overlap += 2.0*np.einsum('iuab,iuab',Sv_a,Sv_b) - np.einsum('iuab,iuba',Sv_a,Sv_b)
+          overlap += self.norm_fact_Sv[0]*np.einsum('iuab,iuab',Sv_a,Sv_b) + self.norm_fact_Sv[1]*np.einsum('iuab,iuba',Sv_a,Sv_b)
           return overlap
         except: 
           return overlap
       except:
         return overlap
 
-      self.dict_new_r_t1 = None
-      self.dict_new_r_t2 = None
+    def calc_overlap_sing_vec(self, t2_a=None, t2_b=None, t1_a=None, t1_b=None, So_a=None, So_b=None, Sv_a=None, Sv_b=None):
+
+      overlap = 0.0 
+      try:
+        overlap = self.norm_fact_t2[0]*np.einsum('ijab,ijab',t2_a, t2_b) + self.norm_fact_t2[1]*np.einsum('ijab,ijba',t2_a, t2_b)
+        #overlap = 2.0*np.einsum('ijab,ijab',t2_a, t2_b) - np.einsum('ijab,ijba',t2_a, t2_b)
+      except:
+        overlap += 0.0
+
+      try:
+        overlap = self.norm_fact_t1[0]*np.einsum('ia,ia',t1_a, t1_b)
+        #overlap = 2.0*np.einsum('ia,ia',t1_a, t1_b)
+      except: 
+        overlap += 0.0
+
+      try:
+        overlap = self.norm_fact_So[0]*np.einsum('ijav,ijav',So_a,So_b) + self.norm_fact_So[1]*np.einsum('ijav,jiav',So_a,So_b)
+        #overlap = 2.0*np.einsum('ijav,ijav',So_a,So_b) - np.einsum('ijav,jiav',So_a,So_b)
+      except: 
+        overlap += 0.0
+
+      try:
+        overlap = self.norm_fact_Sv[0]*np.einsum('iuab,iuab',Sv_a,Sv_b) + self.norm_fact_Sv[1]*np.einsum('iuab,iuba',Sv_a,Sv_b)
+        #overlap = 2.0*np.einsum('iuab,iuab',Sv_a,Sv_b) - np.einsum('iuab,iuba',Sv_a,Sv_b)
+      except:
+        overlap += 0.0
+
+      return overlap
 
     def use_overlap(self, overlap, t2, t1=None, So=None, Sv=None):
 
@@ -973,6 +1153,7 @@ class state():
       if ( not self.tConverged):
         self.update_amplitudes(cc, data)
         self.orthonormalize_amplitudes(cc, data)
+        #self.orthonormalize_amplitudes_alt(cc, data)
 
     def reset_data(self, cc, data):
 
