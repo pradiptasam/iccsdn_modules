@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import copy as cp
 import scipy
@@ -7,10 +8,16 @@ import pyscf
 from pyscf import gto, scf
 from pyscf.lib import logger
 
-from PostHF import GetIntNData
+_pythonpath = os.environ['PYTHONPATH']
 
-import utils
+_present_in_pythonpath =  _pythonpath.find('iccsdn_module') >= 0
 
+if (_present_in_pythonpath):
+  import PostHF
+  import utils
+else:
+  from pyscf.iccsdn import PostHF
+  from pyscf.iccsdn import utils
 
 class state():
 
@@ -78,7 +85,7 @@ class state():
         self.rank_So = 1
         self.rank_Sv = 1
   
-    print '**** RUNNING ', variant,  ' ****'
+    print('**** RUNNING ', variant,  ' ****')
 
     self.tInitParams = False
     self.e_old = self.e_hf
@@ -88,7 +95,7 @@ class state():
     if self.tInitParams:
       self.init_parameters()
 
-    self.AllData = GetIntNData(self.mf, self.nfo, self.nfv)
+    self.AllData = PostHF.GetIntNData(self.mf, self.nfo, self.nfv)
 
     self.AllData.transform_all_ints()
 
@@ -183,29 +190,29 @@ class state():
     def convergence(self, cc, e_cc, eps, x):
       del_e = e_cc - cc.e_old
       if abs(eps) <= cc.conv and abs(del_e) <= cc.conv:
-        print "ccsd converged!!!"
-        print "Total energy is : "+str(cc.e_hf + e_cc)
+        print("ccsd converged!!!")
+        print("Total energy is : "+str(cc.e_hf + e_cc))
         return True
       else:
-        print "cycle number : "+str(x+1)
-        print "change in t1 and t2 : "+str(eps)
-        print "energy difference : "+str(del_e)
-        print "energy : "+str(cc.e_hf + e_cc)
+        print("cycle number : "+str(x+1))
+        print("change in t1 and t2 : "+str(eps))
+        print("energy difference : "+str(del_e))
+        print("energy : "+str(cc.e_hf + e_cc))
         return False
  
     def convergence_ext(self, cc, e_cc, eps, eps_So, eps_Sv, x):
       del_e = e_cc - cc.e_old
       if abs(eps) <= cc.conv and abs(eps_So) <= cc.conv and abs(eps_Sv) <= cc.conv and abs(del_e) <= cc.conv:
-        print "change in t1+t2 , So, Sv : "+str(eps)+" "+str(eps_So)+" "+str(eps_Sv)
-        print "energy difference : "+str(del_e)
-        print "ccsd converged!!!"
-        print "Total energy is : "+str(cc.e_hf + e_cc)
+        print("change in t1+t2 , So, Sv : "+str(eps)+" "+str(eps_So)+" "+str(eps_Sv))
+        print("energy difference : "+str(del_e))
+        print("ccsd converged!!!")
+        print("Total energy is : "+str(cc.e_hf + e_cc))
         return True
       else:
-        print "cycle number : "+str(x+1)
-        print "change in t1+t2 , So, Sv : "+str(eps)+" "+str(eps_So)+" "+str(eps_Sv)
-        print "energy difference : "+str(del_e)
-        print "energy : "+str(cc.e_hf + e_cc)
+        print("cycle number : "+str(x+1))
+        print("change in t1+t2 , So, Sv : "+str(eps)+" "+str(eps_So)+" "+str(eps_Sv))
+        print("energy difference : "+str(del_e))
+        print("energy : "+str(cc.e_hf + e_cc))
         return False
  
     def calc_residue(self, cc, data):
@@ -331,7 +338,7 @@ class state():
  
       self.converge_cc_eqn(self.cc_main, self.cc_main.AllData)
 
-      print '**** CCSD is done ****'
+      print('**** CCSD is done ****')
 
 
   class Exc_en():
@@ -380,7 +387,7 @@ class state():
       if (cc.rank_Sv > 0):
         data.init_guess_r_Sv(self.root_info[ind])
       
-      print 'Response amplitudes are initiated'
+      print ('Response amplitudes are initiated')
 
     def calc_matrix_products(self, cc, data):
 
@@ -557,7 +564,7 @@ class state():
           for jroot in range(0,nroot):
             loc1 = r*nroot+iroot
             loc2 = m*nroot+jroot
-     	    if (cc.rank_t1 > 0): 
+            if (cc.rank_t1 > 0):
               data.B_Y_ia[loc1,loc2] = self.norm_fact_t1[0]*np.einsum('ia,ia',data.dict_r_t1[r,iroot],data.dict_Y_ia[m,jroot])
               data.B_Y_ia[loc2,loc1] = self.norm_fact_t1[0]*np.einsum('ia,ia',data.dict_r_t1[m,jroot],data.dict_Y_ia[r,iroot])
       
@@ -641,7 +648,7 @@ class state():
         elif (n_ind == 2):
           dict_x_t[iroot] = np.zeros((ind_dims[0],ind_dims[1]))
         else: 
-          print 'Only possible for one- and two-body excitations'
+          print('Only possible for one- and two-body excitations')
 
         if (self.tUseOtherRoots):
           for m in range(0,r+1):
@@ -720,7 +727,7 @@ class state():
           vec_t1 = None
           return vec_t2
       else:
-        print 'Error in calculation: Generating vector with zero norm'
+        print('Error in calculation: Generating vector with zero norm')
         quit()
 
 
@@ -759,7 +766,7 @@ class state():
         elif (n_ind == 2):
           dict_R_t[iroot] = np.zeros((ind_dims[0],ind_dims[1]))
         else: 
-          print 'Only possible for one- and two-body excitations'
+          print('Only possible for one- and two-body excitations')
 
         for m in range(0,r+1):
           for jroot in range(0, nroot):
@@ -835,16 +842,16 @@ class state():
 
         print ("             ------------------------")
         if (cc.rank_So > 0):
-          print '>>> iter:', self.x+1  ,' root:',iroot+1,  eps_t[iroot], eps_So[iroot], eps_Sv[iroot]
+          print(">>> iter: "+ str(self.x+1)  +"  root: "+str(iroot+1) +  " " + str(eps_t[iroot]) + " " + str(eps_So[iroot]) + " " + str(eps_Sv[iroot]))
         else:
-          print '>>> iter:', self.x+1  ,' root:',iroot+1,  eps_t[iroot]
-        print 'E>> iter:', self.x+1 , ' root:',iroot+1,self.w[iroot], ' a.u. ', self.w[iroot]*27.2113839, ' eV'
+          print(">>> iter:"+str(self.x+1)+"  root:" + str(iroot+1) + " " + str(eps_t[iroot]))
+        print("E>> iter: " +  str(self.x+1) + "  root: "+ str(iroot+1) + " " +str(self.w[iroot]) + "  a.u.  " + str(self.w[iroot]*27.2113839) + "  eV")
         print ("             ------------------------")
 
       if (sum(self.count)== nroot):
-        print "!!!!!!!!!!CONVERGED!!!!!!!!!!!!"
+        print("!!!!!!!!!!CONVERGED!!!!!!!!!!!!")
         for iroot in range(0,nroot):
-          print 'Excitation Energy for sym', self.isym, 'iroot', iroot+1, ' :', self.w[iroot], ' a.u. ', self.w[iroot]*27.2113839, ' eV'
+          print("Excitation Energy for sym "+ str(self.isym) + " iroot " + str(iroot+1) + "  : " + str(self.w[iroot]) + "  a.u.  " + str(self.w[iroot]*27.2113839) + "  eV")
           self.print_vectors(iroot, cc) 
         tConverged = True
       else:
@@ -1022,7 +1029,7 @@ class state():
               dict_orth_r_t2[iroot] += -ovrlap*data.dict_r_t2[m, jroot]
               dict_orth_r_t1[iroot] += -ovrlap*data.dict_r_t1[m, jroot]
 
-    	    else: 
+            else: 
 
               ovrlap = self.calc_overlap(self.dict_new_r_t2[iroot],data.dict_r_t2[m,jroot])
 
@@ -1218,9 +1225,9 @@ class state():
 
         self.check_any_change(self.cc_main)
         for i, nroot in enumerate(self.root_info):
-    	  if (nroot > 0):
-    	    self.exc_energy_sym(i)
-    	  print 'Done calculation for ', i
+          if (nroot > 0):
+            self.exc_energy_sym(i)
+          print("Done calculation for  " + str(i))
 
     def print_statements(self, ind, isym):
 
@@ -1245,7 +1252,7 @@ class state():
   
     def print_vectors(self, iroot, cc):
 
-      print 'Most Dominant configuration for this excited state:'
+      print('Most Dominant configuration for this excited state:')
       
       nocc = cc.nocc
       nvirt = cc.nvirt
@@ -1255,15 +1262,15 @@ class state():
       if (cc.rank_t1 > 0):
         for i in range(0,nocc):
           for a in range(0,nvirt):
-	    if (abs(self.dict_x_t1[iroot][i,a]) > self.amp_thrs):
-              print i,"-->  ", a+nocc,"     ", self.dict_x_t1[iroot][i,a]
+            if (abs(self.dict_x_t1[iroot][i,a]) > self.amp_thrs):
+              print(str(i)+" -->   "+ str(a+nocc)+"       "+ str(self.dict_x_t1[iroot][i,a]))
 
       for i in range(0,nocc):
         for j in range(0,nocc):
           for a in range(0,nvirt):
             for b in range(0,a+1):
               if (abs(self.dict_x_t2[iroot][i,j,a,b]) > self.amp_thrs):
-                print i,"  ", j,"-->  ", a+nocc,"   ", b+nocc,"     ", self.dict_x_t2[iroot][i,j,a,b]
+                print(str(i) + "  "+ str(j) +" -->   "+ str(a+nocc) + "   " +str(b+nocc) +"       "+ str(self.dict_x_t2[iroot][i,j,a,b]))
         
       if (cc.rank_Sv > 0):
         for i in range(0,nocc):
@@ -1271,7 +1278,7 @@ class state():
             for a in range(0,nvirt):
               for b in range(0,a+1):
                 if (abs(self.dict_x_Sv[iroot][i,u,a,b]) > self.amp_thrs):
-                  print i,"  ", u+nocc,"-->  ", a+nocc,"   ", b+nocc,"     ", self.dict_x_Sv[iroot][i,u,a,b]
+                  print(str(i)+"  "+ str(u+nocc)+" -->   "+ str(a+nocc)+"   "+ str(b+nocc)+"       "+ str(self.dict_x_Sv[iroot][i,u,a,b]))
         
       if (cc.rank_So > 0):
         for i in range(0,nocc):
@@ -1279,7 +1286,7 @@ class state():
             for a in range(0,nvirt):
               for v in range(0,no_act):
                 if (abs(self.dict_x_So[iroot][i,j,a,v]) > self.amp_thrs):
-                  print i,"  ", j,"-->  ", a+nocc,"   ", v+nocc-no_act,"     ", self.dict_x_So[iroot][i,u,a,b]
+                  print(str(i) +"  " + str(j) +" -->   "+ str(a+nocc) + "   "+ str(v+nocc-no_act)+"       "+  str(self.dict_x_So[iroot][i,u,a,b]))
     
         
 if __name__ == '__main__':

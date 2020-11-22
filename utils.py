@@ -4,18 +4,18 @@ import numpy as np
 class intermediates(object):
     def __init__(self, data):
 
-	self.nao = data.nao
-	self.nocc = data.nocc
-	self.nvirt = data.nvirt
-	self.no_act = data.no_act
-
-	self.data = data
-	self.nv_act = data.nv_act
-	self.n_act = self.no_act + self.nv_act
-
+        self.nao = data.nao
+        self.nocc = data.nocc
+        self.nvirt = data.nvirt
+        self.no_act = data.no_act
+        
+        self.data = data
+        self.nv_act = data.nv_act
+        self.n_act = self.no_act + self.nv_act
+        
     def initialize(self):
-	occ = self.nocc
-	nao = self.nao
+        occ = self.nocc
+        nao = self.nao
         I_vv = cp.deepcopy(self.data.fock_mo[occ:nao,occ:nao])
         I_oo = cp.deepcopy(self.data.fock_mo[:occ,:occ])
         Ivvvv = cp.deepcopy(self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,occ:nao])
@@ -40,8 +40,8 @@ class intermediates(object):
 
     def update_int(self,I_vv,I_oo,Ioooo,Iovvo,Iovvo_2,Iovov):
 
-	occ = self.nocc
-	nao = self.nao
+        occ = self.nocc
+        nao = self.nao
         I_vv += -2*np.einsum('cdkl,klad->ca',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],self.data.t2) + np.einsum('cdkl,klda->ca',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],self.data.t2)
      
         I_oo += 2*np.einsum('cdkl,ilcd->ik',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],self.data.tau) - np.einsum('dckl,lidc->ik',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],self.data.tau) 
@@ -57,7 +57,7 @@ class intermediates(object):
      
         I_vv = None
         I_oo = None
-	Ioooo = None
+        Ioooo = None
         Iovvo = None
         Iovvo_2 = None
         Iovov = None
@@ -65,8 +65,8 @@ class intermediates(object):
   
     def R_ia_intermediates(self):
 
-	occ = self.nocc
-	nao = self.nao
+        occ = self.nocc
+        nao = self.nao
         I1 = 2*np.einsum('cbkj,kc->bj',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],self.data.t1)
         I2 = -np.einsum('cbjk,kc->bj',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],self.data.t1)
         return I1,I2
@@ -76,9 +76,9 @@ class intermediates(object):
   
     def singles_intermediates(self,I_oo,I_vv,I2, rank_t1):
 
-	occ = self.nocc
-	nao = self.nao
-	virt = self.nvirt
+        occ = self.nocc
+        nao = self.nao
+        virt = self.nvirt
 
         I_oo += 2*np.einsum('ibkj,jb->ik',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],self.data.t1)    #intermediate for diagrams 5
         I_oo += -np.einsum('ibjk,jb->ik',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],self.data.t1)     #intermediate for diagrams 8
@@ -103,7 +103,7 @@ class intermediates(object):
         I_vovv += -np.einsum('cdal,jldb->cjab',self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,:occ],self.data.t2)    #intermediate for diagrams 18
      
         I_oooo_2 = np.zeros((occ,occ,occ,occ))
-	if (rank_t1 > 1):
+        if (rank_t1 > 1):
             Ioooo_2 = 0.5*np.einsum('cdkl,ic,jd->ijkl',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],self.data.t1,self.data.t1)    #intermediate for diagrams 37
 
         I_voov = -np.einsum('cdkl,kjdb->cjlb',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],self.data.t2)    #intermediate for diagrams 39
@@ -119,8 +119,9 @@ class intermediates(object):
         Iooov = np.einsum('dl,ijdb->ijlb',I2,self.data.t2) #intermediate for diagram 34
      
         I3 = np.zeros((occ,virt,virt,occ))
-	if (rank_t1 > 1):
+        if (rank_t1 > 1):
             I3 = -np.einsum('cdkl,ic,ka->idal',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],self.data.t1,self.data.t1)  #intermediate for diagram 40
+
         return I_oo, I_vv, I_oovo, I_vovv, Ioooo_2, I_voov, Iovov_3, Iovvo_3, Iooov, I3
      
         I_vv = None
@@ -238,19 +239,19 @@ class intermediates(object):
 class amplitude(object):
     def __init__(self, data):
 
-	self.nao = data.nao
-	self.nocc = data.nocc
-	self.nvirt = data.nvirt
-	self.no_act = data.no_act
-	self.nv_act = data.nv_act
-
-	self.data = data
-	self.n_act = self.no_act + self.nv_act
+      self.nao = data.nao
+      self.nocc = data.nocc
+      self.nvirt = data.nvirt
+      self.no_act = data.no_act
+      self.nv_act = data.nv_act
+      
+      self.data = data
+      self.n_act = self.no_act + self.nv_act
 
     def singles(self,I1,I2,I_oo,I_vv):
 
-	occ = self.nocc
-	nao = self.nao
+        occ = self.nocc
+        nao = self.nao
         R_ia = cp.deepcopy(self.data.fock_mo[:occ,occ:nao])
         R_ia += -np.einsum('ik,ka->ia',I_oo,self.data.t1)                                          #diagrams 1,l,j,m,n
         R_ia += np.einsum('ca,ic->ia',I_vv,self.data.t1)                                           #diagrams 2,k,i
@@ -272,9 +273,8 @@ class amplitude(object):
         gc.collect()
 
     def doubles(self,I_oo,I_vv,Ivvvv,Ioooo,Iovvo,Iovvo_2,Iovov,Iovov_2):
-	occ = self.nocc
-	nao = self.nao
-        print " "
+        occ = self.nocc
+        nao = self.nao
         R_ijab = 0.5*cp.deepcopy(self.data.twoelecint_mo[:occ,:occ,occ:nao,occ:nao])
         R_ijab += -np.einsum('ik,kjab->ijab',I_oo,self.data.t2)        #diagrams linear 1 and non-linear 25,27,5,8,35,38'
         R_ijab += np.einsum('ca,ijcb->ijab',I_vv,self.data.t2)         #diagrams linear 2 and non-linear 24,26,34',6,7
@@ -301,14 +301,14 @@ class amplitude(object):
 
     def singles_n_doubles(self, I_oovo,I_vovv, rank_t1):
 
-	occ = self.nocc
-	nao = self.nao
+        occ = self.nocc
+        nao = self.nao
         R_ijab = -np.einsum('ijak,kb->ijab',I_oovo,self.data.t1)       #diagrams 11,12,13,15,17
         R_ijab += np.einsum('cjab,ic->ijab',I_vovv,self.data.t1)       #diagrams 9,10,14,16,18
         R_ijab += -np.einsum('ijkb,ka->ijab',self.data.twoelecint_mo[:occ,:occ,:occ,occ:nao],self.data.t1)            #diagram 3
         R_ijab += np.einsum('cjab,ic->ijab',self.data.twoelecint_mo[occ:nao,:occ,occ:nao,occ:nao],self.data.t1)       #diagram 4
 
-	if (rank_t1 > 1):
+        if (rank_t1 > 1):
             R_ijab += -np.einsum('ickb,ka,jc->ijab',self.data.twoelecint_mo[:occ,occ:nao,:occ,occ:nao],self.data.t1,self.data.t1)   #diagrams non-linear 3
             R_ijab += -np.einsum('icak,jc,kb->ijab',self.data.twoelecint_mo[:occ,occ:nao,occ:nao,:occ],self.data.t1,self.data.t1)   #diagrams non-linear 4
         return R_ijab
@@ -531,21 +531,21 @@ class amplitude(object):
 class intermediates_response(object):
     def __init__(self, data, r, iroot):
 
-	self.nao = data.nao
-	self.nocc = data.nocc
-	self.nvirt = data.nvirt
-	self.no_act = data.no_act
-	self.nv_act = data.nv_act
-
-	self.data = data
-	self.n_act = self.no_act + self.nv_act
-
-	self.r = r
-	self.iroot = iroot
+        self.nao = data.nao
+        self.nocc = data.nocc
+        self.nvirt = data.nvirt
+        self.no_act = data.no_act
+        self.nv_act = data.nv_act
+        
+        self.data = data
+        self.n_act = self.no_act + self.nv_act
+        
+        self.r = r
+        self.iroot = iroot
 
     def initialize(self):
-	occ = self.nocc
-	nao = self.nao
+        occ = self.nocc
+        nao = self.nao
         I_vv = cp.deepcopy(self.data.fock_mo[occ:nao,occ:nao])
         I_oo = cp.deepcopy(self.data.fock_mo[:occ,:occ])
         Ivvvv = cp.deepcopy(self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,occ:nao])
@@ -570,13 +570,13 @@ class intermediates_response(object):
 
     def update_int(self,I_vv,I_oo,Ioooo,Iovvo,Iovvo_2,Iovov, order):
 
-	occ = self.nocc
-	nao = self.nao
-	
-	if (order == 0):
-	    t2 = self.data.t2
-	elif(order == 1):
-	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+        occ = self.nocc
+        nao = self.nao
+        
+        if (order == 0):
+            t2 = self.data.t2
+        elif(order == 1):
+            t2 = self.data.dict_r_t2[self.r, self.iroot]
 
 
         I_vv = -2*np.einsum('cdkl,klad->ca',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t2) + np.einsum('cdkl,klda->ca',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t2)
@@ -602,13 +602,13 @@ class intermediates_response(object):
   
     def R_ia_intermediates(self, order):
 
-	occ = self.nocc
-	nao = self.nao
-
-	if (order == 0):
-	    t1 = self.data.t1
-	elif(order == 1):
-	    t1 = self.data.dict_r_t1[self.r, self.iroot]
+        occ = self.nocc
+        nao = self.nao
+        
+        if (order == 0):
+            t1 = self.data.t1
+        elif(order == 1):
+            t1 = self.data.dict_r_t1[self.r, self.iroot]
 
         I1 = 2*np.einsum('cbkj,kc->bj',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t1)
         I2 = -np.einsum('cbjk,kc->bj',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t1)
@@ -619,16 +619,16 @@ class intermediates_response(object):
   
     def singles_intermediates(self,I_oo,I_vv,rank_t1,order):
 
-	occ = self.nocc
-	nao = self.nao
-	virt = self.nvirt
-
-	if (order == 0):
-	    t1 = self.data.t1
-	    t2 = self.data.t2
-	elif(order == 1):
-	    t1 = self.data.dict_r_t1[self.r, self.iroot]
-	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+        occ = self.nocc
+        nao = self.nao
+        virt = self.nvirt
+        
+        if (order == 0):
+            t1 = self.data.t1
+            t2 = self.data.t2
+        elif(order == 1):
+            t1 = self.data.dict_r_t1[self.r, self.iroot]
+            t2 = self.data.dict_r_t2[self.r, self.iroot]
 
         if (rank_t1 > 0):
             I_oo += 2*np.einsum('ibkj,jb->ik',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],t1)    #intermediate for diagrams 5
@@ -653,11 +653,11 @@ class intermediates_response(object):
         I_vovv += 2*np.einsum('cdal,ljdb->cjab',self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,:occ],t2)    #intermediate for diagrams 16
         I_vovv += -np.einsum('cdal,jldb->cjab',self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,:occ],t2)    #intermediate for diagrams 18
      
-	return I_oo, I_vv, I_oovo, I_vovv
-	I_oo = None
-	I_vv = None
-	I_oovo = None
-	I_vovv = None
+        return I_oo, I_vv, I_oovo, I_vovv
+        I_oo = None
+        I_vv = None
+        I_oovo = None
+        I_vovv = None
 
     def W1_int_So(self, order):
 
@@ -665,10 +665,10 @@ class intermediates_response(object):
         nao = self.nao
         o_act = self.no_act
        
-	if (order == 0):
-	    So = self.data.So
-	elif(order == 1):
-	    So = self.data.dict_r_So[self.r, self.iroot]
+        if (order == 0):
+            So = self.data.So
+        elif(order == 1):
+            So = self.data.dict_r_So[self.r, self.iroot]
 
         II_oo = np.zeros((occ,occ)) 
         II_oo[:,occ-o_act:occ] += -2*0.25*np.einsum('ciml,mlcv->iv',self.data.twoelecint_mo[occ:nao,:occ,:occ,:occ],So) 
@@ -684,10 +684,10 @@ class intermediates_response(object):
         virt = self.nvirt
         v_act = self.nv_act
        
-	if (order == 0):
-	    Sv = self.data.Sv
-	elif(order == 1):
-	    Sv = self.data.dict_r_Sv[self.r, self.iroot]
+        if (order == 0):
+            Sv = self.data.Sv
+        elif(order == 1):
+            Sv = self.data.dict_r_Sv[self.r, self.iroot]
 
         II_vv = np.zeros((virt,virt))
         II_vv[:v_act,:] += 2*0.25*np.einsum('dema,mude->ua',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ:nao],Sv) 
@@ -703,10 +703,10 @@ class intermediates_response(object):
         o_act = self.no_act
         v_act = self.nv_act
        
-	if (order == 0):
-	    Sv = self.data.Sv
-	elif(order == 1):
-	    Sv = self.data.dict_r_Sv[self.r, self.iroot]
+        if (order == 0):
+            Sv = self.data.Sv
+        elif(order == 1):
+            Sv = self.data.dict_r_Sv[self.r, self.iroot]
 
         II_vo = np.zeros((virt,o_act))
         II_vo[:v_act,:] += 2*0.25*np.einsum('cblv,lwcb->wv',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ-o_act:occ],Sv) 
@@ -723,10 +723,10 @@ class intermediates_response(object):
         o_act = self.no_act
         v_act = self.nv_act
        
-	if (order == 0):
-	    So = self.data.So
-	elif(order == 1):
-	    So = self.data.dict_r_So[self.r, self.iroot]
+        if (order == 0):
+            So = self.data.So
+        elif(order == 1):
+            So = self.data.dict_r_So[self.r, self.iroot]
 
         II_ov = np.zeros((v_act,occ)) 
         II_ov[:,occ-o_act:occ] += -2*0.25*np.einsum('dulk,lkdx->ux',self.data.twoelecint_mo[occ:nao,occ:occ+v_act,:occ,:occ],So)
@@ -744,10 +744,10 @@ class intermediates_response(object):
         o_act = self.no_act
         v_act = self.nv_act
        
-	if (order == 0):
-	    So = self.data.So
-	elif(order == 1):
-	    So = self.data.dict_r_So[self.r, self.iroot]
+        if (order == 0):
+            So = self.data.So
+        elif(order == 1):
+            So = self.data.dict_r_So[self.r, self.iroot]
 
         II_ovoo = np.zeros((occ,virt,o_act,occ))
         II_ovoo3 = np.zeros((occ,v_act,occ,occ))
@@ -772,10 +772,10 @@ class intermediates_response(object):
         o_act = self.no_act
         v_act = self.nv_act
 
-	if (order == 0):
-	    Sv = self.data.Sv
-	elif(order == 1):
-	    Sv = self.data.dict_r_Sv[self.r, self.iroot]
+        if (order == 0):
+            Sv = self.data.Sv
+        elif(order == 1):
+            Sv = self.data.dict_r_Sv[self.r, self.iroot]
 
         II_vvvo = np.zeros((v_act,virt,virt,occ))
         II_vvvo2 = np.zeros((virt,virt,virt,o_act))
@@ -792,25 +792,25 @@ class intermediates_response(object):
 class amplitude_response(object):
     def __init__(self, data, r, iroot):
 
-	self.nao = data.nao
-	self.nocc = data.nocc
-	self.nvirt = data.nvirt
-	self.no_act = data.no_act
-	self.nv_act = data.nv_act
-
-	self.data = data
-	self.n_act = self.no_act + self.nv_act
-
-	self.r = r
-	self.iroot = iroot
+        self.nao = data.nao
+        self.nocc = data.nocc
+        self.nvirt = data.nvirt
+        self.no_act = data.no_act
+        self.nv_act = data.nv_act
+        
+        self.data = data
+        self.n_act = self.no_act + self.nv_act
+        
+        self.r = r
+        self.iroot = iroot
 
     def singles_linear(self,I_oo,I_vv):
 
-	occ = self.nocc
-	nao = self.nao
-
-	t1 = self.data.dict_r_t1[self.r, self.iroot]
-	t2 = self.data.dict_r_t2[self.r, self.iroot]
+        occ = self.nocc
+        nao = self.nao
+        
+        t1 = self.data.dict_r_t1[self.r, self.iroot]
+        t2 = self.data.dict_r_t2[self.r, self.iroot]
 
         R_ia = -np.einsum('ik,ka->ia',I_oo,t1) #diagrams 1
         R_ia += np.einsum('ca,ic->ia',I_vv,t1) #diagrams 2
@@ -829,15 +829,15 @@ class amplitude_response(object):
 
     def doubles_linear(self,I_oo,I_vv,Ivvvv,Ioooo,Iovvo,Iovvo_2,Iovov,Iovov_2,rank_t1):
 
-	occ = self.nocc
-	nao = self.nao
-
-	t1 = self.data.dict_r_t1[self.r, self.iroot]
-	t2 = self.data.dict_r_t2[self.r, self.iroot]
+        occ = self.nocc
+        nao = self.nao
+        
+        t1 = self.data.dict_r_t1[self.r, self.iroot]
+        t2 = self.data.dict_r_t2[self.r, self.iroot]
 
         R_ijab = -np.einsum('ik,kjab->ijab',I_oo,t2) #diagrams 1
         R_ijab += np.einsum('ca,ijcb->ijab',I_vv,t2) #diagrams 2
-	if (rank_t1 > 0):
+        if (rank_t1 > 0):
             R_ijab += -np.einsum('ijkb,ka->ijab',self.data.twoelecint_mo[:occ,:occ,:occ,occ:nao],t1) #diagram 3
             R_ijab += np.einsum('cjab,ic->ijab',self.data.twoelecint_mo[occ:nao,:occ,occ:nao,occ:nao],t1) #diagram
         R_ijab += 0.5*np.einsum('cdab,ijcd->ijab',Ivvvv,t2) #diagrams 5
@@ -862,15 +862,15 @@ class amplitude_response(object):
 
     def singles_quadratic(self,I_oo,I_vv, I1, I2, order):
 
-	occ = self.nocc
-	nao = self.nao
-
-	if (order == 0):
-	    t1 = self.data.t1
-	    t2 = self.data.t2
-	elif(order == 1):
-	    t1 = self.data.dict_r_t1[self.r, self.iroot]
-	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+        occ = self.nocc
+        nao = self.nao
+        
+        if (order == 0):
+            t1 = self.data.t1
+            t2 = self.data.t2
+        elif(order == 1):
+            t1 = self.data.dict_r_t1[self.r, self.iroot]
+            t2 = self.data.dict_r_t2[self.r, self.iroot]
 
 
         R_ia = -np.einsum('ik,ka->ia',I_oo,t1) #diagrams l,j
@@ -888,11 +888,11 @@ class amplitude_response(object):
 
     def singles_coupled_order(self):
 
-	occ = self.nocc
-	nao = self.nao
-
-	t1_0 = self.data.t1
-	t1_1 = self.data.dict_r_t1[self.r, self.iroot]
+        occ = self.nocc
+        nao = self.nao
+        
+        t1_0 = self.data.t1
+        t1_1 = self.data.dict_r_t1[self.r, self.iroot]
 
         R_ia = -2*np.einsum('ibkj,ka,jb->ia',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],t1_0,t1_1)       #diagram non-linear a
         R_ia +=  2*np.einsum('cbaj,ic,jb->ia',self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,:occ],t1_0,t1_1) #diagram non-linear c
@@ -903,19 +903,19 @@ class amplitude_response(object):
         R_ia +=  2*np.einsum('cbaj,ic,jb->ia',self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,:occ],t1_1,t1_0)
         R_ia +=  np.einsum('ibjk,ka,jb->ia',self.data.twoelecint_mo[:occ,occ:nao,:occ,:occ],t1_1,t1_0)
         R_ia += -np.einsum('cbja,ic,jb->ia',self.data.twoelecint_mo[occ:nao,occ:nao,:occ,occ:nao],t1_1,t1_0)
-	return R_ia
+        return R_ia
 
-	R_ia = None
+        R_ia = None
 
     def doubles_quadratic(self,I_oo,I_vv,Ioooo,Iovvo,Iovvo_2,Iovov, order):
 
-	occ = self.nocc
-	nao = self.nao
+        occ = self.nocc
+        nao = self.nao
 
-	if (order == 0):
-	    t2 = self.data.t2
-	elif(order == 1):
-	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+        if (order == 0):
+            t2 = self.data.t2
+        elif(order == 1):
+            t2 = self.data.dict_r_t2[self.r, self.iroot]
 
         R_ijab = -np.einsum('ik,kjab->ijab',I_oo,t2)     #diagrams 25,27,5,8
         R_ijab += np.einsum('ca,ijcb->ijab',I_vv,t2)     #diagrams 24,26,6,7
@@ -936,13 +936,13 @@ class amplitude_response(object):
 
     def singles_n_doubles(self,I_oovo,I_vovv, order):
 
-	occ = self.nocc
-	nao = self.nao
-
-	if (order == 0):
-	    t1 = self.data.t1
-	elif(order == 1):
-	    t1 = self.data.dict_r_t1[self.r, self.iroot]
+        occ = self.nocc
+        nao = self.nao
+        
+        if (order == 0):
+            t1 = self.data.t1
+        elif(order == 1):
+            t1 = self.data.dict_r_t1[self.r, self.iroot]
 
         R_ijab = -np.einsum('ijak,kb->ijab',I_oovo,t1)       #diagrams 11,12,13,15,17
         R_ijab += np.einsum('cjab,ic->ijab',I_vovv,t1)       #diagrams 9,10,14,16,18
@@ -955,11 +955,11 @@ class amplitude_response(object):
     
     def singles_to_doubles(self):
 
-	occ = self.nocc
-	nao = self.nao
-
-	t1_0 = self.data.t1
-	t1_1 = self.data.dict_r_t1[self.r, self.iroot]
+        occ = self.nocc
+        nao = self.nao
+        
+        t1_0 = self.data.t1
+        t1_1 = self.data.dict_r_t1[self.r, self.iroot]
 
         R_ijab = 0.5*np.einsum('ijkl,ka,lb->ijab',self.data.twoelecint_mo[:occ,:occ,:occ,:occ],t1_0,t1_1)      #diagram non-linear 1
         R_ijab += 0.5*np.einsum('cdab,ic,jd->ijab',self.data.twoelecint_mo[occ:nao,occ:nao,occ:nao,occ:nao],t1_0,t1_1)  #diagram non-linear 2
@@ -971,16 +971,16 @@ class amplitude_response(object):
         R_ijab += -np.einsum('ickb,ka,jc->ijab',self.data.twoelecint_mo[:occ,occ:nao,:occ,occ:nao],t1_1,t1_0)   #diagrams non-linear 3
         R_ijab += -np.einsum('icak,jc,kb->ijab',self.data.twoelecint_mo[:occ,occ:nao,occ:nao,:occ],t1_1,t1_0)   #diagrams non-linear 4
   
-	return R_ijab
-
-	R_ijab = None
+        return R_ijab
+        
+        R_ijab = None
 
     def inserted_diag_So_t1(self, II_oo, order):
 
-	if (order == 0):
-	    t1 = self.data.t1
-	elif(order == 1):
-	    t1 = self.data.dict_r_t1[self.r, self.iroot]
+        if (order == 0):
+            t1 = self.data.t1
+        elif(order == 1):
+            t1 = self.data.dict_r_t1[self.r, self.iroot]
 
         R_ia = -np.einsum('ik,ka->ia',II_oo, t1)
         return R_ia 
@@ -991,10 +991,10 @@ class amplitude_response(object):
     
     def inserted_diag_Sv_t1(self, II_vv, order):
 
-	if (order == 0):
-	    t1 = self.data.t1
-	elif(order == 1):
-	    t1 = self.data.dict_r_t1[self.r, self.iroot]
+        if (order == 0):
+            t1 = self.data.t1
+        elif(order == 1):
+            t1 = self.data.dict_r_t1[self.r, self.iroot]
 
         R_ia = np.einsum('ca,ic->ia',II_vv, t1)
         return R_ia
@@ -1005,10 +1005,10 @@ class amplitude_response(object):
 
     def inserted_diag_So(self, II_oo, order):
 
-	if (order == 0):
-	    t2 = self.data.t2
-	elif(order == 1):
-	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+        if (order == 0):
+            t2 = self.data.t2
+        elif(order == 1):
+            t2 = self.data.dict_r_t2[self.r, self.iroot]
 
         R_ijab = -np.einsum('ik,kjab->ijab',II_oo,t2)   
         return R_ijab 
@@ -1019,10 +1019,10 @@ class amplitude_response(object):
     
     def inserted_diag_Sv(self, II_vv, order):
 
-	if (order == 0):
-	    t2 = self.data.t2
-	elif(order == 1):
-	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+        if (order == 0):
+            t2 = self.data.t2
+        elif(order == 1):
+            t2 = self.data.dict_r_t2[self.r, self.iroot]
 
         R_ijab = np.einsum('ca,ijcb->ijab',II_vv,t2)  
         return R_ijab
@@ -1039,7 +1039,7 @@ class amplitude_response(object):
         o_act = self.no_act
         v_act = self.nv_act
 
-	Sv = self.data.dict_r_Sv[self.r, self.iroot]
+        Sv = self.data.dict_r_Sv[self.r, self.iroot]
 
         #R_iuab = cp.deepcopy(self.data.twoelecint_mo[:occ,occ:occ+v_act,occ:nao,occ:nao])
         R_iuab  = -np.einsum('ik,kuab->iuab',self.data.fock_mo[:occ,:occ],Sv)
@@ -1062,7 +1062,7 @@ class amplitude_response(object):
         o_act = self.no_act
         v_act = self.nv_act
 
-	t2 = self.data.dict_r_t2[self.r, self.iroot]
+        t2 = self.data.dict_r_t2[self.r, self.iroot]
 
         R_iuab = 2*np.einsum('dukb,kida->iuab',self.data.twoelecint_mo[occ:nao,occ:occ+v_act,:occ,occ:nao],t2)
         R_iuab += -np.einsum('udkb,kida->iuab',self.data.twoelecint_mo[occ:occ+v_act,occ:nao,:occ,occ:nao],t2)
@@ -1081,7 +1081,7 @@ class amplitude_response(object):
         o_act = self.no_act
         v_act = self.nv_act
 
-	So = self.data.dict_r_So[self.r, self.iroot]
+        So = self.data.dict_r_So[self.r, self.iroot]
 
         #R_ijav = cp.deepcopy(self.data.twoelecint_mo[:occ,:occ,occ:nao,occ-o_act:occ])
         R_ijav = np.einsum('da,ijdv->ijav', self.data.fock_mo[occ:nao,occ:nao],So)
@@ -1104,7 +1104,7 @@ class amplitude_response(object):
         o_act = self.no_act
         v_act = self.nv_act
 
-	t2 = self.data.dict_r_t2[self.r, self.iroot]
+        t2 = self.data.dict_r_t2[self.r, self.iroot]
 
         R_ijav = -np.einsum('djlv,liad->ijav',  self.data.twoelecint_mo[occ:nao,:occ,:occ,occ-o_act:occ],t2)
         R_ijav += -np.einsum('djvl,lida->ijav', self.data.twoelecint_mo[occ:nao,:occ,occ-o_act:occ,:occ],t2)
@@ -1123,7 +1123,7 @@ class amplitude_response(object):
         o_act = self.no_act
         v_act = self.nv_act
 
-	t1 = self.data.dict_r_t1[self.r, self.iroot]
+        t1 = self.data.dict_r_t1[self.r, self.iroot]
 
         R_iuab = -np.einsum('uika,kb->iuab', self.data.twoelecint_mo[occ:occ+v_act,:occ,:occ,occ:nao],t1)
         R_iuab += np.einsum('duab,id->iuab', self.data.twoelecint_mo[occ:nao,occ:occ+v_act,occ:nao,occ:nao],t1)
@@ -1140,7 +1140,7 @@ class amplitude_response(object):
         o_act = self.no_act
         v_act = self.nv_act
 
-	t1 = self.data.dict_r_t1[self.r, self.iroot]
+        t1 = self.data.dict_r_t1[self.r, self.iroot]
 
         R_ijav = np.einsum('diva,jd->ijav',  self.data.twoelecint_mo[occ:nao,:occ,occ-o_act:occ,occ:nao],t1)
         R_ijav += np.einsum('djav,id->ijav', self.data.twoelecint_mo[occ:nao,:occ,occ:nao,occ-o_act:occ],t1)
@@ -1152,10 +1152,10 @@ class amplitude_response(object):
 
     def v_so_t_contraction_diag(self, II_ov, order):
 
-	if (order == 0):
-	    t2 = self.data.t2
-	elif(order == 1):
-	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+        if (order == 0):
+            t2 = self.data.t2
+        elif(order == 1):
+            t2 = self.data.dict_r_t2[self.r, self.iroot]
 
         R_iuab = -np.einsum('ux,xiba->iuab',II_ov,t2)
         return R_iuab
@@ -1166,10 +1166,10 @@ class amplitude_response(object):
     
     def v_sv_t_contraction_diag(self, II_vo, order):
 
-	if (order == 0):
-	    t2 = self.data.t2
-	elif(order == 1):
-	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+        if (order == 0):
+            t2 = self.data.t2
+        elif(order == 1):
+            t2 = self.data.dict_r_t2[self.r, self.iroot]
 
         R_ijav = np.einsum('wv,jiwa->ijav',II_vo,t2)
         return R_ijav
@@ -1180,10 +1180,10 @@ class amplitude_response(object):
 
     def W2_diag_So(self, II_ovoo,II_vvvo2,II_ovoo2, order):
 
-	if (order == 0):
-	    t2 = self.data.t2
-	elif(order == 1):
-	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+        if (order == 0):
+            t2 = self.data.t2
+        elif(order == 1):
+            t2 = self.data.dict_r_t2[self.r, self.iroot]
 
         R_ijav = 2.0*np.einsum('jdvw,wida->ijav',II_ovoo,t2)
         R_ijav += -np.einsum('jdvw,wiad->ijav',II_ovoo,t2) #diagonal terms
@@ -1200,10 +1200,10 @@ class amplitude_response(object):
     
     def W2_diag_Sv(self, II_vvvo,II_ovoo3,II_vvvo3, order):
 
-	if (order == 0):
-	    t2 = self.data.t2
-	elif(order == 1):
-	    t2 = self.data.dict_r_t2[self.r, self.iroot]
+        if (order == 0):
+            t2 = self.data.t2
+        elif(order == 1):
+            t2 = self.data.dict_r_t2[self.r, self.iroot]
 
         R_iuab = 2.0*np.einsum('uxbl,ilax->iuab',II_vvvo,t2)
         R_iuab += -np.einsum('uxbl,ilxa->iuab',II_vvvo,t2)
